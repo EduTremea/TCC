@@ -1,0 +1,28 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# Arquivos temporários
+~$*
+*.tmp
+
+# LaTeX
+*.tex
+*.bib
+*.pdf
+*.aux
+*.toc
+*.out
+*.lof
+*.lot
+*.synctex.gz

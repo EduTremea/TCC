@@ -1,0 +1,53 @@
+[0] Config.pm:328> INFO - This is Biber 2.21
+[0] Config.pm:331> INFO - Logfile is 'sbc-template.blg'
+[189] biber-MSWIN64:342> INFO - === 
+[253] Biber.pm:421> INFO - Reading 'sbc-template.bcf'
+[430] Biber.pm:1002> INFO - Found 38 citekeys in bib section 0
+[451] Biber.pm:4487> INFO - Processing section 0
+[466] Biber.pm:4678> INFO - Looking for bibtex file 'sbc-template.bib' for section 0
+[560] bibtex.pm:1713> INFO - LaTeX decoding ...
+[580] bibtex.pm:1519> INFO - Found BibTeX data source 'sbc-template.bib'
+[652] UCollate.pm:68> INFO - Overriding locale 'pt-BR' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[652] UCollate.pm:68> INFO - Overriding locale 'pt-BR' defaults 'variable = shifted' with 'variable = non-ignorable'
+[652] Biber.pm:4307> INFO - Sorting list 'nty/global//global/global/global' of type 'entry' with template 'nty' and locale 'pt-BR'
+[652] Biber.pm:4313> INFO - No sort tailoring available for locale 'pt-BR'
+[656] bbl.pm:676> INFO - Writing 'sbc-template.bbl' with encoding 'UTF-8'
+[657] bbl.pm:779> INFO - Output to sbc-template.bbl
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref1' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref2' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref3' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref4' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref5' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'amaral2025' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref6' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref7' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref8' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref9' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref10' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref11' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref12' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref13' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ref14' (section 0)
+[658] Biber.pm:132> WARN - I didn't find a database entry for 'ferreira2023' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref15' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref16' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref17' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref18' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref19' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref20' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref21' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref22' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref23' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref24' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref25' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref26' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref27' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref28' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref29' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref30' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref31' (section 0)
+[659] Biber.pm:132> WARN - I didn't find a database entry for 'ref32' (section 0)
+[660] Biber.pm:132> WARN - I didn't find a database entry for 'ref33' (section 0)
+[660] Biber.pm:132> WARN - I didn't find a database entry for 'ref34' (section 0)
+[660] Biber.pm:132> WARN - I didn't find a database entry for 'ref35' (section 0)
+[660] Biber.pm:134> INFO - WARNINGS: 37

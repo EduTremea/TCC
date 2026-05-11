@@ -1,0 +1,95 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nty/global//global/global/global}
+    \entry{ogliari2019}{book}{}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=0f358d91f0902ac7213dea188667b022}{%
+           family={Ogliari},
+           familyi={O\bibinitperiod},
+           given={Ricardo},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{location}{1}{%
+        {São Paulo}%
+      }
+      \list{publisher}{1}{%
+        {Novatec Editora}%
+      }
+      \strng{namehash}{0f358d91f0902ac7213dea188667b022}
+      \strng{fullhash}{0f358d91f0902ac7213dea188667b022}
+      \strng{fullhashraw}{0f358d91f0902ac7213dea188667b022}
+      \strng{bibnamehash}{0f358d91f0902ac7213dea188667b022}
+      \strng{authorbibnamehash}{0f358d91f0902ac7213dea188667b022}
+      \strng{authornamehash}{0f358d91f0902ac7213dea188667b022}
+      \strng{authorfullhash}{0f358d91f0902ac7213dea188667b022}
+      \strng{authorfullhashraw}{0f358d91f0902ac7213dea188667b022}
+      \field{sortinit}{O}
+      \field{sortinithash}{2cd7140a07aea5341f9e2771efe90aae}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{pagetotal}{264}
+      \field{title}{Internet das Coisas para Desenvolvedores}
+      \field{year}{2019}
+    \endentry
+  \enddatalist
+  \missing{amaral2025}
+  \missing{ferreira2023}
+  \missing{ref1}
+  \missing{ref10}
+  \missing{ref11}
+  \missing{ref12}
+  \missing{ref13}
+  \missing{ref14}
+  \missing{ref15}
+  \missing{ref16}
+  \missing{ref17}
+  \missing{ref18}
+  \missing{ref19}
+  \missing{ref2}
+  \missing{ref20}
+  \missing{ref21}
+  \missing{ref22}
+  \missing{ref23}
+  \missing{ref24}
+  \missing{ref25}
+  \missing{ref26}
+  \missing{ref27}
+  \missing{ref28}
+  \missing{ref29}
+  \missing{ref3}
+  \missing{ref30}
+  \missing{ref31}
+  \missing{ref32}
+  \missing{ref33}
+  \missing{ref34}
+  \missing{ref35}
+  \missing{ref4}
+  \missing{ref5}
+  \missing{ref6}
+  \missing{ref7}
+  \missing{ref8}
+  \missing{ref9}
+\endrefsection
+\endinput
+
