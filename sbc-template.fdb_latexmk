@@ -1,13 +1,13 @@
 # Fdb version 4
-["biber sbc-template"] 1778028338.91529 "sbc-template.bcf" "sbc-template.bbl" "sbc-template" 1778028348.55604 0
-  "sbc-template.bcf" 1778028348 117255 d10daa2a3afd85b80d4f160828964285 "pdflatex"
+["biber sbc-template"] 1779844432.43437 "sbc-template.bcf" "sbc-template.bbl" "sbc-template" 1779844438.977 0
+  "sbc-template.bcf" 1779844438 115102 ea67f50cfd2277984e7297030d4a8503 "pdflatex"
   "sbc-template.bib" 1777660893 2560 6b3b096b7e603b769f9160cb680ed979 ""
   (generated)
   "sbc-template.bbl"
   "sbc-template.blg"
   (rewritten before read)
-["pdflatex"] 1778028345.76763 "c:/Users/Darth/Documents/TCC/Docs/TCC - Escrita/sbc-template.tex" "sbc-template.pdf" "sbc-template" 1778028348.55718 0
-  "c:/Users/Darth/Documents/TCC/Docs/TCC - Escrita/sbc-template.tex" 1778028333 21903 c8e040abaeeba7df58bc6e3b92a7628d ""
+["pdflatex"] 1779844435.94089 "c:/Users/Darth/Documents/TCC - Docs/TCC/sbc-template.tex" "sbc-template.pdf" "sbc-template" 1779844438.97831 0
+  "c:/Users/Darth/Documents/TCC - Docs/TCC/sbc-template.tex" 1779844427 17357 04528381c52756ec87f8db20887f3ea2 ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/base/8r.enc" 1777663157 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1777662568 2971 def0b6c1f0b107b3b936def894055589 ""
   "c:/texlive/2026/texmf-dist/fonts/map/fontname/texfonts.map" 1777663668 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -172,12 +172,12 @@
   "c:/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt" 1777668795 3648451 5b4a4158a581d9129eb51a08fdc31c5e ""
   "c:/texlive/2026/texmf.cnf" 1777668440 713 614551405fc44b98efbf516466e3c909 ""
   "fig1.jpg" 1777660893 39933 e1bbe31b6df35507bbaf99995585d636 ""
-  "sbc-template.aux" 1778028348 5858 782057ad7236f7ef05bddf3df02b9d6e "pdflatex"
-  "sbc-template.bbl" 1778028342 2603 ca6db6d45459e0def207a965e4107e22 "biber sbc-template"
-  "sbc-template.out" 1778028348 1967 af4b3370be498c6b6a0e04bf7c15c362 "pdflatex"
-  "sbc-template.run.xml" 1778028348 2501 fa891eac0640529ab1093f7c3cfe4e61 "pdflatex"
+  "sbc-template.aux" 1779844438 4123 8bac15aac21229f8b3adf2bfea1e34b5 "pdflatex"
+  "sbc-template.bbl" 1779844435 486 76d65a242ec496c9b4361af646ff12cb "biber sbc-template"
+  "sbc-template.out" 1779844438 2397 10ee12b508b7a49915c9b908fdfc8abe "pdflatex"
+  "sbc-template.run.xml" 1779844438 2501 324c575601adcfb676cfa98d02a71e70 "pdflatex"
   "sbc-template.sty" 1777660893 5044 b8aa4a360cf9c420370e8ac3e85daf34 ""
-  "sbc-template.tex" 1778028333 21903 c8e040abaeeba7df58bc6e3b92a7628d ""
+  "sbc-template.tex" 1779844427 17357 04528381c52756ec87f8db20887f3ea2 ""
   "sty/cc_atitus.sty" 1777660893 3869 3b0bd4d974092453d5a8052d1f22e394 ""
   (generated)
   "sbc-template.aux"
