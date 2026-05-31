@@ -1,28 +1,66 @@
-# Sistema
+# =========================
+# Arquivos auxiliares LaTeX
+# =========================
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.nav
+*.snm
+*.vrb
+*.xdv
+
+# =========================
+# Latexmk / cache
+# =========================
+_latexmk/
+*.latexmk
+
+# =========================
+# Arquivos do sistema
+# =========================
 .DS_Store
 Thumbs.db
 
-# VSCode
+# =========================
+# VSCode / IDE
+# =========================
 .vscode/
+.idea/
 
-# Python
+# =========================
+# Python (caso use scripts)
+# =========================
 __pycache__/
 *.pyc
+*.pyo
 
-# Logs
-*.log
-
-# Arquivos temporários
-~$*
-*.tmp
-
-# LaTeX
-*.tex
-*.bib
-*.pdf
-*.aux
-*.toc
-*.out
-*.lof
-*.lot
-*.synctex.gz
+# =========================
+# MANTER versionado
+# =========================
+!*.tex
+!*.bib
+!*.pdf
+!*.png
+!*.jpg
+!*.jpeg
+!*.svg

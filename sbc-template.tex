@@ -1,0 +1,458 @@
+%%%%
+%       _  _____  ___  _____  _   _  ___ 
+%      / \|_   _||_ _||_   _|| | | |/ __|
+%     / △ \ | |   | |   | |  | |_| |\__ \
+%    /_/¯\_\|_|  |___|  |_|   \___/ |___/
+%                 EDUCAÇÃO
+%    Modelo de TCC - Ciência da Computação
+%%%%
+
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
+\usepackage{graphicx, url}
+\usepackage[utf8x]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[english=american]{csquotes}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{subcaption}
+\usepackage{setspace}
+\usepackage{listings}
+\usepackage[scaled=0.85]{beramono}
+\usepackage{tabularray}
+\usepackage[hidelinks, breaklinks=true]{hyperref}
+%\usepackage{hyperref}
+%\hypersetup{
+%    colorlinks=true,
+%    allcolors=blue,
+%}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% define o modelo de referencias
+\usepackage[style=abnt, giveninits, uniquename=mininit, repeatfields]{biblatex}
+\emergencystretch=1em
+
+% indica o arquivo com as referencis bibliograficas
+\addbibresource{sbc-template.bib}
+
+% carrega o pacote com alterações para Computação Atitus
+\usepackage{sty/cc_atitus}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% REFERENCIAS DEVERÃO SER INCLUÍDAS NO ARQUIVO: sbc-template.bib
+%
+% SOBRE CITAÇÕES:
+% Para citar no padrão '(Autores, ano)' use: \cite{chave}
+% Para citar no padrão 'Autores (ano)'  use: \textcite{chave} ou \citeonline{chave}
+% Para citar no padrão 'Autores'        use: \citelastname{chave}
+% Para citar no padrão 'Autor (ano), Autor (ano) e Autor (ano)' use: \textcites{chave1}{chave2}{chave3}
+% Para citar no padrão '(Autor, 2009c; Outro Autor, 2009; Outro Autor, 2015)' use: 
+%  \cites{chave1}{chave2}{chave3}
+%  ou
+%  \cite{chave1, chave2, chave3}
+
+% Demais exemplos ver documento:
+%  https://github.com/abntex/biblatex-abnt/raw/master/doc/biblatex-abnt.pdf
+%
+% Normas ABNT: https://usp.br/sddarquivos/arquivos/citacoes10520.pdf
+%              https://usp.br/sddarquivos/arquivos/abnt6023.pdf
+%              https://www.fct.unesp.br/Home/Biblioteca/abnt/abnt-atualizado-dez-2023.pdf
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Atualizações no modelo
+% 2024-09-23: (fahadkalil) Ajuste para quebra automática de linhas nas células de uma tabela
+% 2024-10-17: (fahadkalil) Inserção de comentários com outras citações e indicação de uso do comando "\enquote"
+% 2025-06-05: (fahadkalil) Adição de novos exemplos de referências bibliográficas, figuras e tabelas / Correção para que campos desnecessários no arquivo .bib sejam ignorados na renderização / Correção de espaçamento no comando \begin{itemize} usando opções adicionais na seção Trabalhos Relacionados / Correção de recuos quando utilizado o comando \begin{description} / Correção na fonte e espaçamentos do comando 'lstlisting'
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CABEÇALHO
+\title{Título do Trabalho} % titulo
+
+\author{Luiz Eduardo Treméa\inst{1}, Fahad Kalil\inst{1}} % autor principal, orientador
+
+\address{Ciência da Computação -- Atitus Educação\\
+Passo Fundo -- RS -- Brasil
+\email{1123471@atitus.edu.br, fahad.kalil@atitus.edu.br}
+}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\maketitle % Não remova essa linha!
+
+\begin{abstract} % resumo em inglês
+  Escreva seu resumo em língua estrangeira (inglês)...
+\end{abstract}
+     
+\begin{resumo}
+  Resumo do trabalho (português)...  
+\end{resumo}
+
+\section{Introdução}
+Cenários, motivação, justificativa, problema de pesquisa, objetivo geral e específicos (taxonomia de Bloom);
+
+\section{Referencial Teórico}
+
+Nesta seção, são apresentados os fundamentos teóricos que sustentam o uso de Inteligência Artificial e Modelos de Linguagem de Grande Escala (\textit{Large Language Models -- LLMs}) para a otimização e reescrita de consultas em sistemas de banco de dados.
+
+\subsection{Evolução da Otimização de Consultas e Uso de Inteligência Artificial}
+
+A evolução da otimização de consultas reflete a transição de um paradigma puramente baseado em modelos matemáticos estáticos para sistemas adaptativos e centrados nos dados \cite{ref_otimizacao_geral}. Tradicionalmente, os otimizadores baseados em custo utilizam três componentes fundamentais: \textit{Cardinality Estimation} (CE), \textit{Cost Model} (CM) e \textit{Plan Enumeration} (PE) \cite{ref_ce_cm_pe}. O componente CE utiliza estatísticas como histogramas unidimensionais, amostragem e \textit{sketches} para prever o número de tuplas processadas por cada operador \cite{ref_histogramas}. O modelo de custo, por sua vez, é definido por equações artesanais que combinam CPU, I/O e memória para atribuir um valor escalar a cada plano candidato \cite{ref_cost_model}.
+
+Apesar de consolidadas, essas abordagens apresentam limitações importantes em \textit{workloads} modernos \cite{ref_limitacoes_otimizadores}. O principal problema reside na suposição de independência entre atributos e distribuições uniformes, frequentemente incompatíveis com dados reais correlacionados ou enviesados (\textit{skewed}) \cite{ref_correlated_data}. Erros na estimativa de cardinalidade propagam-se ao longo das árvores de execução e podem conduzir o otimizador à seleção de planos significativamente inferiores \cite{ref_cardinality_errors}. Além disso, o ajuste manual realizado por especialistas (\textit{Database Administrators} -- DBAs) possui alto custo operacional e baixa escalabilidade em ambientes distribuídos e de nuvem \cite{ref_manual_tuning}.
+
+Nesse contexto surge a \textit{Learned Query Optimization} (LQO), cuja principal diferença em relação à otimização clássica está na forma de representação do conhecimento \cite{ref_lqo}. Enquanto abordagens heurísticas dependem de regras fixas e estáticas, a LQO incorpora modelos de \textit{Machine Learning} capazes de aprender relações entre características da consulta e desempenho real observado em execuções anteriores \cite{ref_heuristics_vs_ml}.
+
+Dois sistemas destacam-se nessa transição:
+
+\begin{itemize}
+
+\item \textbf{Neo (\textit{Neural Optimizer})}
+
+O Neo é um otimizador ponta a ponta que substitui modelos de custo tradicionais por uma \textit{Value Network} baseada em redes neurais convolucionais em árvore (\textit{Tree Convolutions}) \cite{marcus2019neo}. O sistema utiliza Aprendizado por Reforço (\textit{Reinforcement Learning}) e estratégias de \textit{best-first search} para prever o plano de execução mais eficiente, refinando continuamente suas decisões por meio do feedback de latência observado \cite{marcus2019neo}.
+
+\item \textbf{Bao (\textit{Bandit Optimizer})}
+
+Diferentemente do Neo, o Bao atua como uma camada complementar ao otimizador existente, fornecendo \textit{hints} de execução ao mecanismo tradicional \cite{marcus2021bao}. O problema é modelado como um \textit{Contextual Multi-Armed Bandit}, utilizando \textit{Thompson Sampling} para selecionar o conjunto de dicas com maior probabilidade de sucesso para cada consulta \cite{marcus2021bao}. O Bao destaca-se pela eficiência de treinamento e pela adaptação dinâmica a mudanças de esquema e dados.
+
+\end{itemize}
+
+Essas limitações associadas à rigidez heurística e à incapacidade de modelar relações complexas entre dados impulsionaram o avanço de soluções baseadas em Inteligência Artificial \cite{ref_limitacoes_lqo}.
+
+\subsection{SQL Query Rewriting via LLMs (SQL-to-SQL)}
+
+O conceito de \textit{SQL Query Rewriting via Large Language Models} (LLMs) envolve transformar uma instrução SQL em uma versão logicamente equivalente, porém mais eficiente, utilizando as capacidades de compreensão estrutural e raciocínio dos modelos de linguagem \cite{ref_sql_rewriting}. Diferentemente de sistemas \textit{Text-to-SQL}, cujo objetivo é converter linguagem natural em SQL, a reescrita \textit{SQL-to-SQL} opera diretamente sobre consultas formais já existentes, tornando a equivalência semântica um requisito indispensável \cite{ref_sql_to_sql}.
+
+As transformações mais recorrentes na literatura incluem o uso de \textit{Common Table Expressions} (CTEs), decorrelação de subconsultas, reordenação de junções, \textit{predicate pushdown}, pré-agregação e simplificação lógica \cite{ref_transformacoes_sql}. Essas técnicas visam reduzir redundâncias, minimizar processamento intermediário e racionalizar operações de alto custo computacional \cite{ref_cte_pushdown}.
+
+Para garantir a correção da reescrita, os sistemas utilizam mecanismos de validação em múltiplos estágios \cite{ref_semantic_validation}. A validação sintática é geralmente realizada pelo próprio \textit{parser} do SGBD, permitindo a autocorreção do modelo \cite{ref_parser_validation}. Já a equivalência semântica pode ser verificada por ferramentas baseadas em lógica formal e \textit{Satisfiability Modulo Theories} (SMT), ou ainda pela comparação dos resultados obtidos sobre conjuntos de dados amostrais \cite{ref_qed_sqlsolver}.
+
+Os principais riscos dessas abordagens incluem alucinações, \textit{semantic drift}, falhas sintáticas e instabilidade dos planos gerados \cite{ref_llm_risks}. O papel dos LLMs varia conforme a arquitetura proposta.
+
+\begin{itemize}
+
+\item \textbf{LLM-R2}
+
+Utiliza \textit{In-Context Learning} para recomendar sequências de regras derivadas do Apache Calcite, restringindo o espaço de busca e reduzindo erros semânticos \cite{li2024llmr2}.
+
+\item \textbf{R-Bot}
+
+Emprega arquitetura baseada em \textit{Retrieval-Augmented Generation} (RAG), recuperando documentação técnica e histórico de consultas para fundamentar a geração da reescrita \cite{sun2025rbot}.
+
+\item \textbf{QUITE}
+
+Baseia-se em uma arquitetura multiagente controlada por Máquina de Estados Finita (\textit{Finite State Machine} -- FSM), refinando iterativamente as consultas com feedback em tempo real do banco \cite{song2025quite}.
+
+\item \textbf{LITHE / AGENTIC-LITHE}
+
+Exploram transformações diretamente no espaço da consulta, utilizando telemetria probabilística e algoritmos como \textit{Monte Carlo Tree Search} (MCTS) para explorar o espaço de reescritas \cite{ref_lithe}.
+
+\end{itemize}
+
+O desempenho dessas abordagens é normalmente avaliado por métricas como redução de latência, custo estimado pelo otimizador, taxa de equivalência e percentual de melhoria efetiva de desempenho \cite{ref_metrics_sql_rewrite}.
+
+\subsection{Estimativa de Cardinalidade e Modelos Aprendidos}
+
+A estimativa de cardinalidade é frequentemente descrita como o ``calcanhar de Aquiles'' da otimização de consultas \cite{ref_cardinality_problem}. Sua função consiste em prever o número de tuplas resultantes de cada operador em um plano de execução, permitindo que o modelo de custo estime o consumo de recursos computacionais \cite{ref_ce_function}. Erros nessa etapa propagam-se ao longo das árvores de junção e podem produzir escolhas inadequadas de operadores físicos, como a seleção incorreta entre \textit{Nested Loop Join} e \textit{Hash Join} \cite{ref_join_errors}.
+
+Para superar as limitações das estatísticas tradicionais, surgiram modelos aprendidos orientados a dados.
+
+\begin{itemize}
+
+\item \textbf{NeuroCard}
+
+Propõe um estimador unificado para todo o banco de dados baseado em modelos autorregressivos profundos \cite{yang2021neurocard}. O sistema aprende a distribuição probabilística da junção externa total das tabelas, capturando correlações complexas sem assumir independência estatística \cite{yang2021neurocard}. Técnicas de fatoração sem perdas permitem lidar com colunas de alta cardinalidade mantendo eficiência computacional.
+
+\item \textbf{FLAT}
+
+Introduz as \textit{Factorize-Split-Sum-Product Networks} (FSPN), capazes de decompor a distribuição conjunta de forma adaptativa \cite{zhu2021flat}. O modelo diferencia atributos fortemente e fracamente correlacionados, conciliando precisão elevada com baixo custo de inferência e armazenamento \cite{zhu2021flat}.
+
+\end{itemize}
+
+Em comparação com histogramas tradicionais, esses modelos apresentam vantagens expressivas ao capturar correlações de alta ordem e distribuições enviesadas \cite{ref_histogram_limits}. Trabalhos recentes apontam reduções significativas no \textit{q-error} em \textit{benchmarks} complexos como o JOB-light \cite{ref_joblight}.
+
+Existe ainda uma relação direta entre estimativa de cardinalidade e reescrita via LLMs. Sistemas avançados utilizam informações estatísticas provenientes do otimizador para orientar transformações semanticamente equivalentes e estatisticamente favoráveis \cite{ref_lithe_cardinality}. Estimativas precisas fornecem contexto factual sobre densidade e seletividade dos dados, reduzindo o risco de regressão de desempenho decorrente da reescrita \cite{ref_selectivity_guidance}.
+
+\subsection{Arquiteturas RAG e Sistemas Baseados em Agentes}
+
+A \textit{Retrieval-Augmented Generation} (RAG) aplicada a bancos de dados busca reduzir alucinações em LLMs ao incorporar conhecimento externo e evidências específicas do domínio durante a geração ou reescrita de consultas \cite{ref_rag_db}. No contexto SQL, essa abordagem permite recuperar estratégias previamente validadas e documentação especializada que complementam o conhecimento interno do modelo \cite{ref_rag_sql}.
+
+O processo geralmente envolve duas etapas principais: recuperação e fundamentação (\textit{grounding}) \cite{ref_rag_pipeline}. Inicialmente, consultas e documentos são convertidos em representações vetoriais (\textit{embeddings}), permitindo busca híbrida baseada em semântica e estrutura \cite{ref_embeddings}. Posteriormente, os artefatos recuperados são utilizados como receitas de reescrita e contexto operacional para orientar a decisão do modelo \cite{ref_grounding}.
+
+Arquiteturas multiagente expandem esse paradigma ao distribuir responsabilidades entre componentes especializados.
+
+\begin{itemize}
+
+\item \textbf{Planner}
+
+Responsável por analisar a estrutura da consulta e propor estratégias iniciais de otimização \cite{ref_planner_agent}.
+
+\item \textbf{Reviewer}
+
+Executa validação sintática e semântica, utilizando compiladores SQL e verificadores formais \cite{ref_reviewer_agent}.
+
+\item \textbf{Executor}
+
+Aplica as transformações aprovadas e coleta métricas reais de desempenho do banco de dados \cite{ref_executor_agent}.
+
+\end{itemize}
+
+O elemento central dessas arquiteturas é o \textit{feedback loop} \cite{ref_feedback_loop}. Métricas derivadas de comandos como \texttt{EXPLAIN} e \texttt{EXPLAIN ANALYZE} permitem comparar custo estimado e execução real, alimentando processos iterativos de autocorreção \cite{ref_explain_feedback}. Quando uma reescrita não produz o ganho esperado ou viola restrições semânticas, o sistema reinicia o ciclo de decisão incorporando o histórico da falha \cite{ref_self_correction}. Essa dinâmica aproxima a reescrita baseada em LLMs de sistemas adaptativos orientados por evidências operacionais reais.
+
+
+\subsection{Comparação Crítica, Limitações e Oportunidades de Pesquisa}
+
+A análise comparativa entre sistemas de reescrita de consultas baseados em \textit{Large Language Models} (LLMs) e abordagens de \textit{Learned Query Optimization} (LQO) evidencia uma mudança progressiva de paradigma na otimização de consultas SQL \cite{ref_paradigm_shift}. Enquanto os otimizadores aprendidos concentram-se predominantemente na melhoria interna dos mecanismos de planejamento e execução, os sistemas de \textit{SQL-to-SQL rewriting} deslocam o foco para transformações semânticas realizadas na camada de interface declarativa da consulta \cite{ref_lqo_vs_rewrite}. Essa distinção altera significativamente os mecanismos de decisão, os requisitos de validação e o grau de intervenção sobre o motor de banco de dados.
+
+\subsubsection{Limitações e Barreiras dos Sistemas Atuais}
+
+Apesar dos avanços recentes, a literatura aponta desafios relevantes que ainda restringem a adoção ampla de reescritores baseados em LLMs em ambientes corporativos \cite{ref_limitations_llm}.
+
+Um dos principais obstáculos está relacionado à confiança e à verificação da equivalência semântica \cite{ref_semantic_bottleneck}. Diferentemente de aplicações \textit{Text-to-SQL}, nas quais certo grau de ambiguidade é tolerável, a reescrita SQL exige preservação absoluta da lógica original da consulta. Verificadores formais baseados em lógica ou \textit{Satisfiability Modulo Theories} (SMT) apresentam cobertura limitada para consultas envolvendo agregações complexas, múltiplas junções ou subconsultas aninhadas \cite{ref_smt_limits}. Já mecanismos de validação por execução podem produzir falsos positivos quando os dados utilizados nos testes não contemplam todas as combinações relevantes de predicados \cite{ref_execution_validation_limit}.
+
+Outro fator crítico refere-se ao custo computacional e à latência de inferência \cite{ref_inference_cost}. Enquanto otimizadores tradicionais operam em escala de milissegundos, modelos de linguagem frequentemente demandam segundos para produzir uma resposta \cite{ref_latency_gap}. Em cenários de produção, o custo financeiro associado ao uso contínuo de APIs comerciais torna inviável a reescrita indiscriminada de todas as consultas, motivando o desenvolvimento de mecanismos de roteamento e seleção dinâmica de modelos (\textit{model routing}) \cite{ref_model_router}.
+
+A literatura também destaca problemas relacionados a alucinações e \textit{semantic drifting} \cite{ref_hallucinations}. Em determinadas situações, modelos podem sugerir regras inexistentes ou alterar inadvertidamente a lógica da consulta original, produzindo resultados incorretos ou regressões severas de desempenho \cite{ref_semantic_drift}. Além disso, tanto LLMs quanto otimizadores aprendidos frequentemente operam como caixas-pretas, reduzindo a capacidade de auditoria e dificultando a investigação de regressões por administradores de banco de dados \cite{ref_blackbox_problem}.
+
+\subsubsection{Comparação Técnica entre LQO e Sistemas de Reescrita via LLM}
+
+A Tabela~\ref{tab:lqo_llm_compare} sintetiza as diferenças arquiteturais entre os principais trabalhos da literatura.
+
+\begin{table}[ht]
+\centering
+\caption{Comparação entre sistemas de LQO e reescrita baseada em LLMs}
+\label{tab:lqo_llm_compare}
+\begin{tabular}{|p{2cm}|p{2.8cm}|p{3cm}|p{2.8cm}|p{3cm}|}
+\hline
+\textbf{Sistema} &
+\textbf{Espaço de Transformação} &
+\textbf{Mecanismo de Decisão} &
+\textbf{Uso de IA/LLM} &
+\textbf{Feedback e Resiliência} \\ \hline
+
+Neo &
+Espaço de plano &
+\textit{Value Network} (Tree-CNN) &
+\textit{Deep Learning} ponta-a-ponta &
+\textit{Bootstrapping} via PostgreSQL \\ \hline
+
+Bao &
+Conjunto de \textit{hints} &
+\textit{Thompson Sampling} &
+Aprendizado por reforço &
+Adaptativo ao \textit{workload} \\ \hline
+
+LLM-R2 &
+Seleção de regras &
+\textit{In-Context Learning} &
+LLM + modelo contrastivo &
+Equivalência via Calcite \\ \hline
+
+R-Bot &
+Seleção de regras &
+RAG + raciocínio passo-a-passo &
+LLM + recuperação híbrida &
+Auto-reflexão e \textit{recipes} \\ \hline
+
+QUITE &
+Espaço de consulta &
+Multiagentes + FSM &
+LLM agents + MDP &
+Feedback em tempo real \\ \hline
+
+LITHE &
+Espaço de consulta &
+MCTS sobre tokens &
+LLM + telemetria &
+Validação lógica e estatística \\ \hline
+
+\end{tabular}
+\end{table}
+
+A comparação evidencia diferenças substanciais entre as abordagens \cite{ref_compare_systems}. Neo e Bao concentram-se no interior do otimizador. O Neo propõe uma reconstrução profunda do modelo de custo e da seleção de planos, enquanto o Bao preserva a estrutura do otimizador tradicional e apenas orienta suas escolhas por meio de \textit{hints} físicos \cite{marcus2019neo,marcus2021bao}. Em ambos os casos, entretanto, não há atuação direta sobre a estrutura declarativa da consulta.
+
+Em contraste, LLM-R2 e R-Bot operam como orquestradores externos de regras e conhecimento especializado \cite{li2024llmr2,sun2025rbot}. O LLM-R2 restringe o espaço de decisão a regras previamente conhecidas, reduzindo riscos semânticos, enquanto o R-Bot introduz o uso de \textit{Retrieval-Augmented Generation} para recuperar receitas de otimização derivadas de documentação técnica e experiências anteriores.
+
+Sistemas mais recentes, como QUITE e LITHE, apresentam maior independência de regras fixas \cite{song2025quite,ref_lithe}. O QUITE utiliza arquitetura multiagente para iterar sobre a consulta até que o feedback operacional do banco indique melhoria efetiva de desempenho. Já o LITHE emprega \textit{Monte Carlo Tree Search} sobre probabilidades de geração de tokens, explorando alternativas de reescrita em regiões onde o modelo apresenta menor confiança estatística.
+
+\subsubsection{Lacunas Científicas e Oportunidades de Pesquisa}
+
+Embora os avanços recentes tenham ampliado significativamente o potencial da reescrita automática de consultas, diversas lacunas permanecem abertas \cite{ref_research_gaps}.
+
+Uma primeira limitação refere-se ao chamado \textit{impedance mismatch} semântico \cite{ref_impedance}. Existe um desalinhamento entre as transformações propostas pelos modelos de linguagem e as capacidades efetivamente suportadas pelos motores de execução atuais. Muitas reescritas semanticamente sofisticadas não podem ser traduzidas diretamente em regras genéricas de otimização.
+
+Outra oportunidade de pesquisa envolve o aprendizado automático de regras de transformação \cite{ref_rule_discovery}. Em vez de utilizar LLMs apenas em tempo de execução, torna-se possível empregá-los para descobrir novos padrões de otimização a partir de consultas lentas e posteriormente destilar esse conhecimento em regras nativas de baixo custo computacional.
+
+Questões de segurança e privacidade também emergem como preocupação crescente \cite{ref_security_rag}. O uso de RAG frequentemente exige acesso a esquemas, metadados e informações operacionais potencialmente sensíveis, tornando necessária a investigação de técnicas de anonimização e ofuscação de esquema.
+
+A literatura ainda aponta espaço para pesquisas envolvendo ajuste fino orientado ao domínio (\textit{domain fine-tuning}) \cite{ref_domain_finetune}. Grande parte dos estudos atuais depende exclusivamente de \textit{prompt engineering}, havendo pouca exploração do treinamento especializado com planos de execução, documentação de SGBDs e histórico de otimizações.
+
+Por fim, observa-se uma carência de \textit{benchmarks} dinâmicos \cite{ref_dynamic_benchmark}. Os conjuntos de avaliação predominantes permanecem estáticos e pouco representativos da variabilidade observada em ambientes corporativos reais. O desenvolvimento de estruturas experimentais capazes de incorporar deriva de dados, mudanças de \textit{workload} e feedback contínuo constitui uma oportunidade relevante para futuras investigações.
+
+
+\section{Trabalhos Relacionados}
+
+Nesta seção, são analisados os principais estudos que utilizam Inteligência Artificial, especificamente LLMs e modelos aprendidos, para a reescrita e otimização de consultas SQL.
+
+\begin{itemize}
+
+\item \textbf{O uso da Inteligência Artificial na otimização de consultas em bancos de dados (Amaral, Andrade e Campos, 2025)}
+
+Os autores investigaram a viabilidade do uso do ChatGPT para a reescrita semântica de consultas em ambientes PostgreSQL. O estudo utilizou uma metodologia experimental com scripts Python para automatizar a execução e coleta de métricas, focando em transformações como o uso de \textit{Common Table Expressions} (CTEs), pré-agregações e redução de subconsultas. Os resultados demonstraram que a intervenção da IA pode reduzir o tempo de execução em até 90\% em cenários complexos com múltiplos \textit{joins}, promovendo uma racionalização no uso de índices e tabelas.
+
+\item \textbf{LLM-R2: A Large Language Model Enhanced Rule-based Rewrite System (Li et al., 2024)}
+
+Este trabalho propõe o sistema LLM-R2, que utiliza LLMs para sugerir sequências de regras de reescrita para plataformas como o Apache Calcite. O diferencial técnico reside no uso de um modelo contrastivo treinado via currículo para selecionar demonstrações (\textit{few-shot}) estruturalmente similares à consulta de entrada. Ao delegar a execução final das regras a um motor de banco de dados, o sistema garante executabilidade e equivalência semântica, superando abordagens de geração livre suscetíveis a alucinações.
+
+\item \textbf{R-Bot: An LLM-based Query Rewrite System (Sun et al., 2025)}
+
+O estudo introduz o R-Bot, um sistema que busca mitigar alucinações por meio de uma arquitetura baseada em \textit{Retrieval-Augmented Generation} (RAG). O sistema utiliza recuperação híbrida, combinando características estruturais e semânticas, para buscar ``receitas de reescrita'' e evidências provenientes de fóruns técnicos e manuais de SGBDs. O processo é refinado por um mecanismo de reescrita passo a passo com autorreflexão, permitindo que o modelo compreenda as inter-relações entre regras antes da aplicação final.
+
+\item \textbf{LITHE: A Query Rewrite Advisor using LLMs (Dharwada et al., 2025)}
+
+Os autores propõem o LITHE, sistema que realiza transformações diretamente no espaço de consulta (\textit{SQL-to-SQL}) em vez do espaço de plano físico. A abordagem utiliza regras sensíveis ao banco de dados, fundamentadas em seletividade e metadados, combinadas com uma busca em árvore de Monte Carlo (\textit{Monte Carlo Tree Search -- MCTS}) guiada pelas probabilidades de \textit{tokens} do LLM. Essa estratégia permite explorar múltiplos caminhos de reescrita quando a confiança do modelo é baixa, alcançando acelerações expressivas em comparação aos otimizadores nativos.
+
+\item \textbf{QUITE: A Query Rewrite System Beyond Rules with LLM Agents (Song et al., 2025)}
+
+Este trabalho apresenta o QUITE, um \textit{framework} baseado em múltiplos agentes controlados por uma Máquina de Estados Finita (\textit{Finite State Machine -- FSM}). O sistema utiliza feedback em tempo real do banco de dados, obtido via comandos \texttt{EXPLAIN}, além de técnicas de injeção de \textit{hints} para garantir que o plano otimizado seja seguido pelo motor de execução. Diferentemente de métodos puramente baseados em regras, o QUITE permite a descoberta de estratégias de otimização que não podem ser expressas por transformações fixas.
+
+\end{itemize}
+
+Diferente das abordagens de otimização interna, como Neo e Bao, que buscam substituir ou modificar componentes do otimizador do SGBD, e dos sistemas de reescrita baseados exclusivamente em regras ou focados apenas na redução isolada de latência, este trabalho propõe uma abordagem de reescrita de consultas SQL do tipo \textit{SQL-to-SQL} baseada em Modelos de Linguagem de Grande Escala (LLMs), apoiada por mecanismos de validação e análise conduzidos pelo próprio sistema gerenciador de banco de dados.
+
+O diferencial da proposta reside na busca por um equilíbrio entre desempenho e preservação semântica. Enquanto abordagens de geração livre oferecem maior flexibilidade de transformação, frequentemente sofrem com problemas de \textit{semantic drift}, alucinações e regressões de desempenho, sistemas rigidamente baseados em regras limitam o espaço de otimização a transformações previamente codificadas. Neste contexto, o presente trabalho propõe uma camada externa e não invasiva de otimização, na qual o LLM atua como agente de reescrita semântica, enquanto o SGBD exerce o papel de mecanismo de validação e evidência técnica.
+
+A abordagem proposta estrutura-se em múltiplos estágios de verificação. Inicialmente, a consulta reescrita é submetida à validação sintática por meio do \textit{parser} do banco de dados. Em seguida, comandos como \texttt{EXPLAIN} e \texttt{EXPLAIN ANALYZE} são utilizados para analisar o plano de execução e comparar o custo estimado entre a consulta original e a versão otimizada. Por fim, a equivalência da transformação é avaliada por meio da comparação dos resultados produzidos pelas consultas, reduzindo o risco de alterações indevidas na semântica original.
+
+Dessa forma, o sistema proposto estabelece um ciclo em que o LLM propõe transformações, o otimizador do SGBD fornece evidências de desempenho e os mecanismos de validação asseguram a correção da reescrita. Como resultado, busca-se desenvolver uma solução de otimização prática, explicável e compatível com diferentes SGBDs relacionais, preservando a confiabilidade necessária para aplicações corporativas e ambientes reais de produção.
+
+\section{Materiais e Métodos}
+    Tecnologias, instrumentos e procedimentos que serão usados no estudo. O Algoritmo~\ref{alg:id_algo} se refere ao método de ordenação \texttt{Bubblesort} expresso em linguagem \texttt{Python}.
+
+    Uma lista numérica:
+    \begin{enumerate}
+        \item Item 1
+        \item Item 2
+    \end{enumerate}
+
+    Uma lista definida com letras sequenciais:
+    \begin{enumerate}[label=\alph*)]
+        \item Item 1
+        \item Item 2
+    \end{enumerate}    
+
+    % Código-fonte formatado
+    % Ver: https://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings
+    \begin{lstlisting}[  
+        %float,
+        language=Python, 
+        frame=single, 
+        numbers=left,
+        caption={Método de ordenação Bubblesort},
+        label={alg:id_algo} % id para referenciar
+        ]        
+def bubble_sort(alist):
+    for i in range(len(alist)-1,0,-1):
+        for j in range(i):
+            if alist[i]>alist[i+1]:
+                temp = alist[i]
+                alist[i] = alist[i+1]
+                alist[i+1] = temp    
+    \end{lstlisting}
+
+\section{Resultados e Discussão}
+Essa seção deverá ser escrita na segunda parte do trabalho, conhecida como TCC2, e deverá conter os resultados dos experimentos realizados, discussão comparando os resultados obtidos com outros encontrados em trabalhos similares, além de um parágrafo apontando as limitações da metodologia adotada.
+
+ % Figura
+    % https://pt.overleaf.com/learn/latex/Inserting_Images
+    \begin{figure}[h!] % h! pede para o compilador tentar incluir a figura na posição em que foi declarada;
+        \centering
+        \includegraphics[width=0.4\textwidth]{fig1.jpg} % altere a width (intervalo entre 0.0 e 1), caso a imagem não fique na posição correta
+        \caption{Exemplo de uso de figura}
+        \label{fig:figura1}
+    \end{figure}
+
+    % Figuras (usando subfigure)
+    % https://latex-tutorial.com/subfigure-latex/
+    \begin{figure}[h!] % h! pede para o compilador tentar incluir a figura na posição em que foi declarada;
+        \centering
+        \caption{Exemplo com sub-figuras}
+        \begin{subfigure}{0.4\textwidth}
+            \includegraphics[width=\textwidth]{fig1.jpg}
+            \caption{Sub-figura 1}
+            \label{fig:sub_fig1}
+        \end{subfigure}
+        \hspace{1em}
+        \begin{subfigure}{0.4\textwidth}
+            \includegraphics[width=\textwidth]{fig1.jpg}
+            \caption{Sub-figura 2}
+            \label{fig:sub_fig2}
+        \end{subfigure}
+        \label{fig:figura2}
+    \end{figure}
+    
+    % Tabelas
+    % Editor online: https://www.latex-tables.com
+    % Referência: https://ctan.math.illinois.edu/macros/latex/contrib/tabularray/tabularray.pdf
+     \begin{table}[H] % h! pede para o compilador tentar incluir a tabela na posição em que foi declarada;
+        \centering
+        \caption{Minha tabela}
+        \label{tab:tabela1}
+        \begin{tblr}{
+          colspec = {X[l] X[l]}, % Tipo X define células com quebra automática de linha. Use: l=left, r=right, c=center ou j=justify para alinhamento dentro das células
+          width = \linewidth,
+          hlines, % inclui borda horizontal
+          vlines, % inclui borda vertical        
+        }
+        \textbf{cabeçalho 1} & \textbf{cabeçalho 2} \\
+        {texto à esquerda} & {Existem muitas variações das passagens do Lorem Ipsum disponíveis, mas a maior parte sofreu alterações de alguma forma.}
+        \end{tblr}        
+    \end{table}
+
+    % tabela com subtabelas
+    \begin{table}[H]
+        \centering
+        \caption{Tabela com sub-tabelas}
+        \label{tab:tabela2}
+        \begin{subtable}{0.45\linewidth} %subtabela
+            \centering            
+            \begin{tblr}{
+              colspec = {X[l] X[l]}, % Tipo X define células com quebra automática de linha. Use: l=left, r=right, c=center ou j=justify para alinhamento dentro das células
+              width = \linewidth,
+              hlines, % inclui borda horizontal
+              vlines, % inclui borda vertical        
+            }
+            \textbf{cabeçalho 1} & \textbf{cabeçalho 2} \\
+            {Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old.} & {The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested.}
+            \end{tblr}
+            \caption{Sub-tabela da esquerda}
+        \end{subtable}
+        \hfill
+        \begin{subtable}{0.45\linewidth} %subtabela
+            \centering            
+            \begin{tblr}{
+                  colspec = {X[l] X[l]}, % Tipo X define células com quebra automática de linha. Use: l=left, r=right, c=center ou j=justify para alinhamento dentro das células
+                  width = \linewidth,
+                  hlines, % inclui borda horizontal
+                  vlines, % inclui borda vertical        
+                }
+                \textbf{cabeçalho 1} & \textbf{cabeçalho 2} \\
+                {Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old.} & {The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested.}
+            \end{tblr}
+            \caption{Sub-tabela da direita}
+        \end{subtable}
+    \end{table}
+
+\section{Considerações Finais}
+Essa seção deverá ser escrita na segunda parte do trabalho, conhecida como TCC2.
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Seção de Referências (gerada automaticamente)
+\printbibliography  % Não remover esta linha
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}

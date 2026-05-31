@@ -1,32 +1,81 @@
 [0] Config.pm:328> INFO - This is Biber 2.21
 [0] Config.pm:331> INFO - Logfile is 'sbc-template.blg'
-[209] biber-MSWIN64:342> INFO - === 
-[286] Biber.pm:421> INFO - Reading 'sbc-template.bcf'
-[465] Biber.pm:1002> INFO - Found 16 citekeys in bib section 0
-[488] Biber.pm:4487> INFO - Processing section 0
-[504] Biber.pm:4678> INFO - Looking for bibtex file 'sbc-template.bib' for section 0
-[596] bibtex.pm:1713> INFO - LaTeX decoding ...
-[619] bibtex.pm:1519> INFO - Found BibTeX data source 'sbc-template.bib'
-[643] UCollate.pm:68> INFO - Overriding locale 'pt-BR' defaults 'variable = shifted' with 'variable = non-ignorable'
-[643] UCollate.pm:68> INFO - Overriding locale 'pt-BR' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[644] Biber.pm:4307> INFO - Sorting list 'nty/global//global/global/global' of type 'entry' with template 'nty' and locale 'pt-BR'
-[644] Biber.pm:4313> INFO - No sort tailoring available for locale 'pt-BR'
-[645] bbl.pm:676> INFO - Writing 'sbc-template.bbl' with encoding 'UTF-8'
-[645] bbl.pm:779> INFO - Output to sbc-template.bbl
-[645] Biber.pm:132> WARN - I didn't find a database entry for 'ref1' (section 0)
-[645] Biber.pm:132> WARN - I didn't find a database entry for 'ref2' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref3' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref4' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref5' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref6' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref7' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref8' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref9' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref10' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref11' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref12' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref13' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref14' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref15' (section 0)
-[646] Biber.pm:132> WARN - I didn't find a database entry for 'ref16' (section 0)
-[646] Biber.pm:134> INFO - WARNINGS: 16
+[214] biber-MSWIN64:342> INFO - === 
+[724] Biber.pm:421> INFO - Reading 'sbc-template.bcf'
+[913] Biber.pm:1002> INFO - Found 65 citekeys in bib section 0
+[934] Biber.pm:4487> INFO - Processing section 0
+[952] Biber.pm:4678> INFO - Looking for bibtex file 'sbc-template.bib' for section 0
+[1048] bibtex.pm:1713> INFO - LaTeX decoding ...
+[1069] bibtex.pm:1519> INFO - Found BibTeX data source 'sbc-template.bib'
+[1111] UCollate.pm:68> INFO - Overriding locale 'pt-BR' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[1111] UCollate.pm:68> INFO - Overriding locale 'pt-BR' defaults 'variable = shifted' with 'variable = non-ignorable'
+[1111] Biber.pm:4307> INFO - Sorting list 'nty/global//global/global/global' of type 'entry' with template 'nty' and locale 'pt-BR'
+[1111] Biber.pm:4313> INFO - No sort tailoring available for locale 'pt-BR'
+[1113] bbl.pm:676> INFO - Writing 'sbc-template.bbl' with encoding 'UTF-8'
+[1114] bbl.pm:779> INFO - Output to sbc-template.bbl
+[1114] Biber.pm:132> WARN - I didn't find a database entry for 'ref_otimizacao_geral' (section 0)
+[1114] Biber.pm:132> WARN - I didn't find a database entry for 'ref_ce_cm_pe' (section 0)
+[1114] Biber.pm:132> WARN - I didn't find a database entry for 'ref_histogramas' (section 0)
+[1114] Biber.pm:132> WARN - I didn't find a database entry for 'ref_cost_model' (section 0)
+[1114] Biber.pm:132> WARN - I didn't find a database entry for 'ref_limitacoes_otimizadores' (section 0)
+[1114] Biber.pm:132> WARN - I didn't find a database entry for 'ref_correlated_data' (section 0)
+[1114] Biber.pm:132> WARN - I didn't find a database entry for 'ref_cardinality_errors' (section 0)
+[1114] Biber.pm:132> WARN - I didn't find a database entry for 'ref_manual_tuning' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_lqo' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_heuristics_vs_ml' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'marcus2019neo' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'marcus2021bao' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_limitacoes_lqo' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_sql_rewriting' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_sql_to_sql' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_transformacoes_sql' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_cte_pushdown' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_semantic_validation' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_parser_validation' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_qed_sqlsolver' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_llm_risks' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'li2024llmr2' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'sun2025rbot' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'song2025quite' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_lithe' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_metrics_sql_rewrite' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_cardinality_problem' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_ce_function' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'ref_join_errors' (section 0)
+[1115] Biber.pm:132> WARN - I didn't find a database entry for 'yang2021neurocard' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'zhu2021flat' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_histogram_limits' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_joblight' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_lithe_cardinality' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_selectivity_guidance' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_rag_db' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_rag_sql' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_rag_pipeline' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_embeddings' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_grounding' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_planner_agent' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_reviewer_agent' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_executor_agent' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_feedback_loop' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_explain_feedback' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_self_correction' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_paradigm_shift' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_lqo_vs_rewrite' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_limitations_llm' (section 0)
+[1116] Biber.pm:132> WARN - I didn't find a database entry for 'ref_semantic_bottleneck' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_smt_limits' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_execution_validation_limit' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_inference_cost' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_latency_gap' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_model_router' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_hallucinations' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_semantic_drift' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_blackbox_problem' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_compare_systems' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_research_gaps' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_impedance' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_rule_discovery' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_security_rag' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_domain_finetune' (section 0)
+[1117] Biber.pm:132> WARN - I didn't find a database entry for 'ref_dynamic_benchmark' (section 0)
+[1117] Biber.pm:134> INFO - WARNINGS: 65
