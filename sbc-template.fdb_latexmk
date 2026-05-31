@@ -1,13 +1,13 @@
 # Fdb version 4
-["biber sbc-template"] 1780259769.89043 "sbc-template.bcf" "sbc-template.bbl" "sbc-template" 1780259780.63358 0
-  "sbc-template.bcf" 1780259780 119569 f436183d3a0c65db2ba01d643aa3cd83 "pdflatex"
+["biber sbc-template"] 1780259769.89043 "sbc-template.bcf" "sbc-template.bbl" "sbc-template" 1780260213.93593 0
+  "sbc-template.bcf" 1780260213 119569 f436183d3a0c65db2ba01d643aa3cd83 "pdflatex"
   "sbc-template.bib" 1777660893 2560 6b3b096b7e603b769f9160cb680ed979 ""
   (generated)
   "sbc-template.bbl"
   "sbc-template.blg"
   (rewritten before read)
-["pdflatex"] 1780259777.52427 "c:/Users/Darth/Documents/TCC - Docs/TCC/sbc-template.tex" "sbc-template.pdf" "sbc-template" 1780259780.63455 0
-  "c:/Users/Darth/Documents/TCC - Docs/TCC/sbc-template.tex" 1780259693 34825 f6a0361d052b53023b3b0f5c44c308fb ""
+["pdflatex"] 1780260210.80357 "c:/Users/Darth/Documents/TCC - Docs/TCC/sbc-template.tex" "sbc-template.pdf" "sbc-template" 1780260213.93693 0
+  "c:/Users/Darth/Documents/TCC - Docs/TCC/sbc-template.tex" 1780260205 34913 ca87484eaa576d2d6519b825bcda3f87 ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/base/8r.enc" 1777663157 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1777662568 2971 def0b6c1f0b107b3b936def894055589 ""
   "c:/texlive/2026/texmf-dist/fonts/map/fontname/texfonts.map" 1777663668 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -172,12 +172,12 @@
   "c:/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt" 1777668795 3648451 5b4a4158a581d9129eb51a08fdc31c5e ""
   "c:/texlive/2026/texmf.cnf" 1777668440 713 614551405fc44b98efbf516466e3c909 ""
   "fig1.jpg" 1777660893 39933 e1bbe31b6df35507bbaf99995585d636 ""
-  "sbc-template.aux" 1780259780 9720 bd6910e00506ba5a38aaded501ba2a9d "pdflatex"
+  "sbc-template.aux" 1780260213 9720 ab2c585ba5ca5b25174cca02f4e99496 "pdflatex"
   "sbc-template.bbl" 1780259773 486 76d65a242ec496c9b4361af646ff12cb "biber sbc-template"
-  "sbc-template.out" 1780259780 3610 7e6b6fe6e1c66c01aae0145851adaf0e "pdflatex"
-  "sbc-template.run.xml" 1780259780 2501 324c575601adcfb676cfa98d02a71e70 "pdflatex"
+  "sbc-template.out" 1780260213 3610 7e6b6fe6e1c66c01aae0145851adaf0e "pdflatex"
+  "sbc-template.run.xml" 1780260213 2501 324c575601adcfb676cfa98d02a71e70 "pdflatex"
   "sbc-template.sty" 1777660893 5044 b8aa4a360cf9c420370e8ac3e85daf34 ""
-  "sbc-template.tex" 1780259693 34825 f6a0361d052b53023b3b0f5c44c308fb ""
+  "sbc-template.tex" 1780260205 34913 ca87484eaa576d2d6519b825bcda3f87 ""
   "sty/cc_atitus.sty" 1777660893 3869 3b0bd4d974092453d5a8052d1f22e394 ""
   (generated)
   "sbc-template.aux"
