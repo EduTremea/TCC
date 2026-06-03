@@ -331,38 +331,95 @@ A abordagem proposta estrutura-se em múltiplos estágios de verificação. Inic
 Dessa forma, o sistema proposto estabelece um ciclo em que o LLM propõe transformações, o otimizador do SGBD fornece evidências de desempenho e os mecanismos de validação asseguram a correção da reescrita. Como resultado, busca-se desenvolver uma solução de otimização prática, explicável e compatível com diferentes SGBDs relacionais, preservando a confiabilidade necessária para aplicações corporativas e ambientes reais de produção.
 
 \section{Materiais e Métodos}
-    Tecnologias, instrumentos e procedimentos que serão usados no estudo. O Algoritmo~\ref{alg:id_algo} se refere ao método de ordenação \texttt{Bubblesort} expresso em linguagem \texttt{Python}.
 
-    Uma lista numérica:
-    \begin{enumerate}
-        \item Item 1
-        \item Item 2
-    \end{enumerate}
+Este trabalho caracteriza-se como uma pesquisa aplicada, de abordagem quantitativa e caráter experimental. A natureza aplicada decorre da busca por uma solução para um problema real relacionado à otimização de consultas SQL em sistemas gerenciadores de bancos de dados. A abordagem quantitativa é adotada por utilizar métricas objetivas de desempenho para avaliar os resultados obtidos, enquanto o caráter experimental está associado à implementação de um protótipo funcional e à realização de testes controlados em ambiente computacional.
 
-    Uma lista definida com letras sequenciais:
-    \begin{enumerate}[label=\alph*)]
-        \item Item 1
-        \item Item 2
-    \end{enumerate}    
+A proposta consiste no desenvolvimento de um mecanismo de reescrita de consultas SQL baseado em Modelos de Linguagem de Grande Escala (Large Language Models -- LLMs), complementado por etapas de validação sintática, validação semântica e análise de desempenho baseada no feedback do próprio otimizador do banco de dados. O objetivo é verificar se consultas reescritas automaticamente podem apresentar melhor desempenho sem comprometer a corretude dos resultados produzidos.
 
-    % Código-fonte formatado
-    % Ver: https://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings
-    \begin{lstlisting}[  
-        %float,
-        language=Python, 
-        frame=single, 
-        numbers=left,
-        caption={Método de ordenação Bubblesort},
-        label={alg:id_algo} % id para referenciar
-        ]        
-def bubble_sort(alist):
-    for i in range(len(alist)-1,0,-1):
-        for j in range(i):
-            if alist[i]>alist[i+1]:
-                temp = alist[i]
-                alist[i] = alist[i+1]
-                alist[i+1] = temp    
-    \end{lstlisting}
+\subsection{Arquitetura da Solução Proposta}
+
+A arquitetura proposta é composta por uma camada intermediária responsável por receber consultas SQL, encaminhá-las para um modelo de linguagem e avaliar a viabilidade das transformações sugeridas.
+
+Inicialmente, uma consulta SQL original é submetida ao sistema. Em seguida, a consulta é enviada ao LLM, que recebe instruções específicas para produzir uma versão semanticamente equivalente e potencialmente mais eficiente. Após a geração da nova consulta, são executadas etapas de validação destinadas a verificar sua corretude e seu impacto sobre o desempenho.
+
+A solução foi concebida para atuar de forma não invasiva, sem necessidade de alterações no núcleo do Sistema Gerenciador de Banco de Dados (SGBD). Dessa forma, o mecanismo pode ser utilizado como uma camada complementar aos otimizadores já existentes.
+
+\subsection{Processo de Reescrita de Consultas}
+
+O processo de reescrita tem início com a submissão de uma consulta SQL ao sistema. A consulta original é utilizada como entrada para o modelo de linguagem, que recebe um conjunto de instruções voltadas à otimização da estrutura lógica da consulta.
+
+As transformações esperadas incluem a substituição de subconsultas por junções, utilização de Common Table Expressions (CTEs), simplificação de predicados, reorganização de filtros e eliminação de operações redundantes. Essas estratégias foram identificadas na literatura como mecanismos capazes de reduzir custos de execução e melhorar o aproveitamento dos recursos computacionais.
+
+O modelo de linguagem não possui autonomia para substituir automaticamente a consulta original. Toda reescrita gerada deve passar pelas etapas de validação definidas neste trabalho antes de ser considerada uma alternativa válida.
+
+\subsection{Validação das Consultas Reescritas}
+
+Considerando os riscos de alucinações e desvios semânticos observados na literatura, foi definida uma estratégia de validação em múltiplos estágios.
+
+A primeira etapa consiste na validação sintática, realizada pelo próprio parser do banco de dados. Consultas que apresentarem erros de compilação ou incompatibilidades estruturais são descartadas automaticamente.
+
+Na sequência, é realizada a validação semântica. Nessa etapa, a consulta original e a consulta reescrita são executadas sobre o mesmo conjunto de dados e seus resultados são comparados. Caso sejam identificadas diferenças entre os conjuntos retornados, a reescrita é rejeitada.
+
+Por fim, realiza-se a validação de desempenho utilizando informações fornecidas pelo próprio otimizador do banco de dados. São analisados os planos de execução gerados pelos comandos \texttt{EXPLAIN} e \texttt{EXPLAIN ANALYZE}, permitindo comparar custos estimados, operadores utilizados e tempos de execução observados.
+
+Somente consultas que preservarem a equivalência semântica e apresentarem melhoria de desempenho serão consideradas otimizações válidas.
+
+\subsection{Ambiente Experimental}
+
+Os experimentos serão realizados utilizando o PostgreSQL como Sistema Gerenciador de Banco de Dados. A escolha ocorre em função de sua ampla utilização em ambientes acadêmicos e corporativos, bem como pela disponibilidade de ferramentas nativas de análise de desempenho.
+
+O protótipo será desenvolvido na linguagem Python, escolhida por sua facilidade de integração com bancos de dados relacionais e plataformas de Inteligência Artificial.
+
+Entre as tecnologias utilizadas destacam-se:
+
+\begin{itemize}
+    \item PostgreSQL;
+    \item Python;
+    \item SQLAlchemy;
+    \item Psycopg;
+    \item Pandas;
+    \item Matplotlib.
+\end{itemize}
+
+O SQLAlchemy será utilizado para gerenciamento das conexões e execução das consultas SQL. O Psycopg atuará como driver de comunicação com o PostgreSQL. O Pandas será empregado na manipulação e comparação dos resultados retornados pelas consultas, enquanto o Matplotlib será utilizado para geração dos gráficos e análises estatísticas.
+
+\subsection{Modelo de Linguagem Utilizado}
+
+A etapa de reescrita será realizada por meio de um Modelo de Linguagem de Grande Escala capaz de executar tarefas de SQL-to-SQL Query Rewriting.
+
+Os experimentos poderão utilizar modelos como GPT-4o, GPT-5, DeepSeek ou Llama 3, dependendo da disponibilidade de acesso e dos recursos computacionais disponíveis durante a execução do estudo.
+
+A escolha do modelo será baseada na qualidade das reescritas produzidas, na estabilidade dos resultados obtidos e na viabilidade de utilização dentro do ambiente experimental.
+
+\subsection{Conjunto de Dados}
+
+A avaliação experimental utilizará bases amplamente empregadas na literatura de otimização de consultas e desempenho de bancos de dados.
+
+Entre os conjuntos de dados considerados destacam-se o TPC-H, o TPC-DS e o Join Order Benchmark (JOB), construído a partir da base IMDb. Esses benchmarks contêm consultas analíticas com diferentes níveis de complexidade, envolvendo múltiplas junções, agregações e operações de filtragem.
+
+A utilização desses conjuntos permite comparar os resultados obtidos com trabalhos relacionados e garantir maior reprodutibilidade dos experimentos.
+
+\subsection{Cenários de Avaliação}
+
+A avaliação será conduzida em três cenários distintos.
+
+No primeiro cenário, as consultas serão executadas sem qualquer modificação, utilizando exclusivamente o otimizador nativo do PostgreSQL.
+
+No segundo cenário, as consultas serão reescritas pelo modelo de linguagem antes da execução, sem aplicação de mecanismos adicionais de validação.
+
+No terceiro cenário, as consultas reescritas serão submetidas ao processo completo de validação proposto neste trabalho, envolvendo verificações sintáticas, semânticas e análise dos planos de execução.
+
+A comparação entre os três cenários permitirá avaliar não apenas o potencial de otimização dos LLMs, mas também a eficácia dos mecanismos de validação na prevenção de regressões de desempenho e erros semânticos.
+
+\subsection{Métricas de Avaliação}
+
+A análise dos resultados será realizada por meio de métricas objetivas de desempenho.
+
+Serão observados o tempo total de execução, o custo estimado do plano de execução, a quantidade de linhas processadas, a taxa de sucesso das reescritas, o percentual de consultas efetivamente otimizadas e a quantidade de reescritas rejeitadas durante o processo de validação.
+
+Os resultados obtidos serão comparados estatisticamente entre os diferentes cenários experimentais, permitindo verificar a efetividade da abordagem proposta e sua viabilidade para aplicação em ambientes reais.
+```
+
 
 \section{Resultados e Discussão}
 Essa seção deverá ser escrita na segunda parte do trabalho, conhecida como TCC2, e deverá conter os resultados dos experimentos realizados, discussão comparando os resultados obtidos com outros encontrados em trabalhos similares, além de um parágrafo apontando as limitações da metodologia adotada.

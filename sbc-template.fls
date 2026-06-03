@@ -339,14 +339,6 @@ INPUT c:/texlive/2026/texmf-dist/fonts/tfm/adobe/helvetic/phvr8t.tfm
 INPUT c:/texlive/2026/texmf-dist/fonts/tfm/adobe/helvetic/phvb8t.tfm
 INPUT c:/texlive/2026/texmf-dist/fonts/vf/adobe/helvetic/phvb8t.vf
 INPUT c:/texlive/2026/texmf-dist/fonts/tfm/adobe/helvetic/phvb8r.tfm
-INPUT c:/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
-INPUT c:/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
-INPUT c:/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
-INPUT c:/texlive/2026/texmf-dist/tex/latex/bera/t1fvm.fd
-INPUT c:/texlive/2026/texmf-dist/tex/latex/bera/t1fvm.fd
-INPUT c:/texlive/2026/texmf-dist/tex/latex/bera/t1fvm.fd
-INPUT c:/texlive/2026/texmf-dist/fonts/tfm/public/bera/fvmr8t.tfm
-INPUT c:/texlive/2026/texmf-dist/fonts/tfm/public/bera/fvmb8t.tfm
 INPUT ./fig1.jpg
 INPUT ./fig1.jpg
 INPUT ./fig1.jpg
@@ -361,10 +353,6 @@ INPUT ./fig1.jpg
 INPUT ./fig1.jpg
 INPUT ./fig1.jpg
 INPUT ./fig1.jpg
-INPUT c:/texlive/2026/texmf-dist/fonts/vf/public/bera/fvmb8t.vf
-INPUT c:/texlive/2026/texmf-dist/fonts/tfm/public/bera/fvmb8r.tfm
-INPUT c:/texlive/2026/texmf-dist/fonts/vf/public/bera/fvmr8t.vf
-INPUT c:/texlive/2026/texmf-dist/fonts/tfm/public/bera/fvmr8r.tfm
 INPUT c:/texlive/2026/texmf-dist/fonts/vf/adobe/helvetic/phvb8t.vf
 INPUT c:/texlive/2026/texmf-dist/fonts/tfm/adobe/helvetic/phvb8r.tfm
 INPUT sbc-template.aux
@@ -373,8 +361,6 @@ INPUT ./sbc-template.out
 INPUT sbc-template.run.xml
 OUTPUT sbc-template.run.xml
 INPUT c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb
-INPUT c:/texlive/2026/texmf-dist/fonts/type1/public/bera/fvmb8a.pfb
-INPUT c:/texlive/2026/texmf-dist/fonts/type1/public/bera/fvmr8a.pfb
 INPUT c:/texlive/2026/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb
 INPUT c:/texlive/2026/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb
 INPUT c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb
