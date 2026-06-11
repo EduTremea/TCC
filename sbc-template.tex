@@ -97,201 +97,45 @@ Cenários, motivação, justificativa, problema de pesquisa, objetivo geral e es
 
 \section{Referencial Teórico}
 
-Nesta seção, são apresentados os fundamentos teóricos que sustentam o uso de Inteligência Artificial e Modelos de Linguagem de Grande Escala (\textit{Large Language Models -- LLMs}) para a otimização e reescrita de consultas em sistemas de banco de dados.
-
 \subsection{Evolução da Otimização de Consultas e Uso de Inteligência Artificial}
 
-A evolução da otimização de consultas reflete a transição de um paradigma puramente baseado em modelos matemáticos estáticos para sistemas adaptativos e centrados nos dados \cite{ref_otimizacao_geral}. Tradicionalmente, os otimizadores baseados em custo utilizam três componentes fundamentais: \textit{Cardinality Estimation} (CE), \textit{Cost Model} (CM) e \textit{Plan Enumeration} (PE) \cite{ref_ce_cm_pe}. O componente CE utiliza estatísticas como histogramas unidimensionais, amostragem e \textit{sketches} para prever o número de tuplas processadas por cada operador \cite{ref_histogramas}. O modelo de custo, por sua vez, é definido por equações artesanais que combinam CPU, I/O e memória para atribuir um valor escalar a cada plano candidato \cite{ref_cost_model}.
+A otimização de consultas em sistemas de gerenciamento de bancos de dados tem sido historicamente sustentada por três componentes centrais: a estimação de cardinalidade, o modelo de custo e a enumeração de planos. Nesse contexto, a qualidade do plano gerado depende diretamente da precisão das estimativas de volume de dados intermediários e da adequação da função de custo associada aos recursos computacionais.
 
-Apesar de consolidadas, essas abordagens apresentam limitações importantes em \textit{workloads} modernos \cite{ref_limitacoes_otimizadores}. O principal problema reside na suposição de independência entre atributos e distribuições uniformes, frequentemente incompatíveis com dados reais correlacionados ou enviesados (\textit{skewed}) \cite{ref_correlated_data}. Erros na estimativa de cardinalidade propagam-se ao longo das árvores de execução e podem conduzir o otimizador à seleção de planos significativamente inferiores \cite{ref_cardinality_errors}. Além disso, o ajuste manual realizado por especialistas (\textit{Database Administrators} -- DBAs) possui alto custo operacional e baixa escalabilidade em ambientes distribuídos e de nuvem \cite{ref_manual_tuning}.
+Apesar de amplamente adotadas, essas abordagens apresentam limitações significativas em cenários contemporâneos, especialmente quando os dados apresentam correlações complexas entre atributos ou quando há variações frequentes na carga de trabalho. Nesses casos, erros de estimação podem comprometer a seleção do plano físico, resultando em degradação de desempenho \cite{marcus2019neo,marcus2021bao}.
 
-Nesse contexto surge a \textit{Learned Query Optimization} (LQO), cuja principal diferença em relação à otimização clássica está na forma de representação do conhecimento \cite{ref_lqo}. Enquanto abordagens heurísticas dependem de regras fixas e estáticas, a LQO incorpora modelos de \textit{Machine Learning} capazes de aprender relações entre características da consulta e desempenho real observado em execuções anteriores \cite{ref_heuristics_vs_ml}.
+Nesse contexto, surge o paradigma de \textit{Learned Query Optimization} (LQO), no qual técnicas de aprendizado de máquina são incorporadas ao processo de otimização. O sistema \textit{Neo} propõe um otimizador baseado em redes neurais profundas capaz de aprender padrões de execução a partir de consultas reais, adaptando-se dinamicamente ao comportamento dos dados \cite{marcus2019neo}. De forma complementar, o sistema \textit{Bao} introduz um mecanismo de otimização híbrida que utiliza aprendizado por reforço para fornecer sugestões de execução por consulta, melhorando o desempenho em cenários reais \cite{marcus2021bao}.
 
-Dois sistemas destacam-se nessa transição:
+\subsection{Reescrita de Consultas SQL com Modelos de Linguagem}
 
-\begin{itemize}
+A reescrita de consultas SQL tem como objetivo transformar uma consulta em outra semanticamente equivalente, porém mais eficiente do ponto de vista computacional. Diferentemente de abordagens de \textit{Text-to-SQL}, o foco da reescrita reside em modificar consultas já estruturadas, mantendo a equivalência lógica dos resultados.
 
-\item \textbf{Neo (\textit{Neural Optimizer})}
+O método \textit{LLM-R2} utiliza modelos de linguagem para sugerir regras de reescrita, combinando aprendizado contrastivo para aprimorar representações de consultas \cite{li2024llmr2}. De maneira semelhante, o sistema \textit{R-Bot} emprega uma abordagem baseada em recuperação de evidências estruturais e semânticas, com o objetivo de orientar o modelo e reduzir erros durante o processo de reescrita \cite{sun2025rbot}.
 
-O Neo é um otimizador ponta a ponta que substitui modelos de custo tradicionais por uma \textit{Value Network} baseada em redes neurais convolucionais em árvore (\textit{Tree Convolutions}) \cite{marcus2019neo}. O sistema utiliza Aprendizado por Reforço (\textit{Reinforcement Learning}) e estratégias de \textit{best-first search} para prever o plano de execução mais eficiente, refinando continuamente suas decisões por meio do feedback de latência observado \cite{marcus2019neo}.
-
-\item \textbf{Bao (\textit{Bandit Optimizer})}
-
-Diferentemente do Neo, o Bao atua como uma camada complementar ao otimizador existente, fornecendo \textit{hints} de execução ao mecanismo tradicional \cite{marcus2021bao}. O problema é modelado como um \textit{Contextual Multi-Armed Bandit}, utilizando \textit{Thompson Sampling} para selecionar o conjunto de dicas com maior probabilidade de sucesso para cada consulta \cite{marcus2021bao}. O Bao destaca-se pela eficiência de treinamento e pela adaptação dinâmica a mudanças de esquema e dados.
-
-\end{itemize}
-
-Essas limitações associadas à rigidez heurística e à incapacidade de modelar relações complexas entre dados impulsionaram o avanço de soluções baseadas em Inteligência Artificial \cite{ref_limitacoes_lqo}.
-
-\subsection{SQL Query Rewriting via LLMs (SQL-to-SQL)}
-
-O conceito de \textit{SQL Query Rewriting via Large Language Models} (LLMs) envolve transformar uma instrução SQL em uma versão logicamente equivalente, porém mais eficiente, utilizando as capacidades de compreensão estrutural e raciocínio dos modelos de linguagem \cite{ref_sql_rewriting}. Diferentemente de sistemas \textit{Text-to-SQL}, cujo objetivo é converter linguagem natural em SQL, a reescrita \textit{SQL-to-SQL} opera diretamente sobre consultas formais já existentes, tornando a equivalência semântica um requisito indispensável \cite{ref_sql_to_sql}.
-
-As transformações mais recorrentes na literatura incluem o uso de \textit{Common Table Expressions} (CTEs), decorrelação de subconsultas, reordenação de junções, \textit{predicate pushdown}, pré-agregação e simplificação lógica \cite{ref_transformacoes_sql}. Essas técnicas visam reduzir redundâncias, minimizar processamento intermediário e racionalizar operações de alto custo computacional \cite{ref_cte_pushdown}.
-
-Para garantir a correção da reescrita, os sistemas utilizam mecanismos de validação em múltiplos estágios \cite{ref_semantic_validation}. A validação sintática é geralmente realizada pelo próprio \textit{parser} do SGBD, permitindo a autocorreção do modelo \cite{ref_parser_validation}. Já a equivalência semântica pode ser verificada por ferramentas baseadas em lógica formal e \textit{Satisfiability Modulo Theories} (SMT), ou ainda pela comparação dos resultados obtidos sobre conjuntos de dados amostrais \cite{ref_qed_sqlsolver}.
-
-Os principais riscos dessas abordagens incluem alucinações, \textit{semantic drift}, falhas sintáticas e instabilidade dos planos gerados \cite{ref_llm_risks}. O papel dos LLMs varia conforme a arquitetura proposta.
-
-\begin{itemize}
-
-\item \textbf{LLM-R2}
-
-Utiliza \textit{In-Context Learning} para recomendar sequências de regras derivadas do Apache Calcite, restringindo o espaço de busca e reduzindo erros semânticos \cite{li2024llmr2}.
-
-\item \textbf{R-Bot}
-
-Emprega arquitetura baseada em \textit{Retrieval-Augmented Generation} (RAG), recuperando documentação técnica e histórico de consultas para fundamentar a geração da reescrita \cite{sun2025rbot}.
-
-\item \textbf{QUITE}
-
-Baseia-se em uma arquitetura multiagente controlada por Máquina de Estados Finita (\textit{Finite State Machine} -- FSM), refinando iterativamente as consultas com feedback em tempo real do banco \cite{song2025quite}.
-
-\item \textbf{LITHE / AGENTIC-LITHE}
-
-Exploram transformações diretamente no espaço da consulta, utilizando telemetria probabilística e algoritmos como \textit{Monte Carlo Tree Search} (MCTS) para explorar o espaço de reescritas \cite{ref_lithe}.
-
-\end{itemize}
-
-O desempenho dessas abordagens é normalmente avaliado por métricas como redução de latência, custo estimado pelo otimizador, taxa de equivalência e percentual de melhoria efetiva de desempenho \cite{ref_metrics_sql_rewrite}.
+Além disso, o sistema \textit{QUITE} utiliza uma arquitetura baseada em múltiplos agentes que interagem por meio de um fluxo controlado, explorando estratégias de reescrita com realimentação do sistema de banco de dados \cite{song2025quite}. Já o sistema \textit{LITHE} propõe mecanismos adicionais para garantir a correção semântica das consultas geradas, incorporando validações baseadas em análise lógica e estatística \cite{dharwada2026lithe}.
 
 \subsection{Estimativa de Cardinalidade e Modelos Aprendidos}
 
-A estimativa de cardinalidade é frequentemente descrita como o ``calcanhar de Aquiles'' da otimização de consultas \cite{ref_cardinality_problem}. Sua função consiste em prever o número de tuplas resultantes de cada operador em um plano de execução, permitindo que o modelo de custo estime o consumo de recursos computacionais \cite{ref_ce_function}. Erros nessa etapa propagam-se ao longo das árvores de junção e podem produzir escolhas inadequadas de operadores físicos, como a seleção incorreta entre \textit{Nested Loop Join} e \textit{Hash Join} \cite{ref_join_errors}.
+A estimação de cardinalidade é amplamente reconhecida como um dos principais fatores que influenciam a qualidade do plano de execução em sistemas de banco de dados, pois determina a previsão do volume de dados manipulados em cada etapa da execução da consulta.
 
-Para superar as limitações das estatísticas tradicionais, surgiram modelos aprendidos orientados a dados.
+O modelo \textit{NeuroCard} propõe um estimador baseado em redes neurais autorregressivas capaz de capturar correlações complexas entre múltiplas tabelas sem assumir independência entre atributos \cite{yang2021neurocard}. Por outro lado, o método \textit{FLAT} introduz um modelo gráfico que combina fatoração independente e condicional, buscando equilibrar precisão e eficiência computacional \cite{zhu2021flat}.
 
-\begin{itemize}
+Essas abordagens evidenciam uma evolução significativa em relação aos métodos tradicionais, permitindo estimativas mais precisas e impactando diretamente o desempenho das consultas executadas.
 
-\item \textbf{NeuroCard}
+\subsection{Arquiteturas Baseadas em Recuperação e Agentes}
 
-Propõe um estimador unificado para todo o banco de dados baseado em modelos autorregressivos profundos \cite{yang2021neurocard}. O sistema aprende a distribuição probabilística da junção externa total das tabelas, capturando correlações complexas sem assumir independência estatística \cite{yang2021neurocard}. Técnicas de fatoração sem perdas permitem lidar com colunas de alta cardinalidade mantendo eficiência computacional.
+Abordagens recentes têm explorado a integração de modelos de linguagem com mecanismos de recuperação de conhecimento, formando pipelines baseados em \textit{Retrieval-Augmented Generation} (RAG). Nesses sistemas, consultas são convertidas em representações vetoriais para recuperar evidências relevantes que orientam o processo de geração.
 
-\item \textbf{FLAT}
+O sistema \textit{R-Bot} exemplifica esse modelo ao combinar recuperação híbrida com geração guidada por evidências \cite{sun2025rbot}. De forma complementar, o \textit{QUITE} utiliza múltiplos agentes responsáveis por planejamento, validação e execução de reescritas, promovendo um processo iterativo de aprimoramento \cite{song2025quite}.
 
-Introduz as \textit{Factorize-Split-Sum-Product Networks} (FSPN), capazes de decompor a distribuição conjunta de forma adaptativa \cite{zhu2021flat}. O modelo diferencia atributos fortemente e fracamente correlacionados, conciliando precisão elevada com baixo custo de inferência e armazenamento \cite{zhu2021flat}.
+Essas arquiteturas demonstram que a utilização de conhecimento externo e mecanismos de validação iterativa contribuem significativamente para reduzir erros e aumentar a robustez das soluções baseadas em modelos de linguagem \cite{sun2025rbot,song2025quite,dharwada2026lithe}.
 
-\end{itemize}
+\subsection{Síntese Crítica da Literatura}
 
-Em comparação com histogramas tradicionais, esses modelos apresentam vantagens expressivas ao capturar correlações de alta ordem e distribuições enviesadas \cite{ref_histogram_limits}. Trabalhos recentes apontam reduções significativas no \textit{q-error} em \textit{benchmarks} complexos como o JOB-light \cite{ref_joblight}.
+A literatura recente evidencia duas direções principais na evolução da otimização de consultas. A primeira envolve a incorporação de aprendizado de máquina diretamente no núcleo do otimizador, com exemplos como \textit{Neo}, \textit{Bao}, \textit{NeuroCard} e \textit{FLAT} \cite{marcus2019neo,marcus2021bao,yang2021neurocard,zhu2021flat}.  
 
-Existe ainda uma relação direta entre estimativa de cardinalidade e reescrita via LLMs. Sistemas avançados utilizam informações estatísticas provenientes do otimizador para orientar transformações semanticamente equivalentes e estatisticamente favoráveis \cite{ref_lithe_cardinality}. Estimativas precisas fornecem contexto factual sobre densidade e seletividade dos dados, reduzindo o risco de regressão de desempenho decorrente da reescrita \cite{ref_selectivity_guidance}.
+A segunda direção explora a reescrita externa de consultas por meio de modelos de linguagem, como observado em \textit{LLM-R2}, \textit{R-Bot}, \textit{QUITE} e \textit{LITHE} \cite{li2024llmr2,sun2025rbot,song2025quite,dharwada2026lithe}.
 
-\subsection{Arquiteturas RAG e Sistemas Baseados em Agentes}
-
-A \textit{Retrieval-Augmented Generation} (RAG) aplicada a bancos de dados busca reduzir alucinações em LLMs ao incorporar conhecimento externo e evidências específicas do domínio durante a geração ou reescrita de consultas \cite{ref_rag_db}. No contexto SQL, essa abordagem permite recuperar estratégias previamente validadas e documentação especializada que complementam o conhecimento interno do modelo \cite{ref_rag_sql}.
-
-O processo geralmente envolve duas etapas principais: recuperação e fundamentação (\textit{grounding}) \cite{ref_rag_pipeline}. Inicialmente, consultas e documentos são convertidos em representações vetoriais (\textit{embeddings}), permitindo busca híbrida baseada em semântica e estrutura \cite{ref_embeddings}. Posteriormente, os artefatos recuperados são utilizados como receitas de reescrita e contexto operacional para orientar a decisão do modelo \cite{ref_grounding}.
-
-Arquiteturas multiagente expandem esse paradigma ao distribuir responsabilidades entre componentes especializados.
-
-\begin{itemize}
-
-\item \textbf{Planner}
-
-Responsável por analisar a estrutura da consulta e propor estratégias iniciais de otimização \cite{ref_planner_agent}.
-
-\item \textbf{Reviewer}
-
-Executa validação sintática e semântica, utilizando compiladores SQL e verificadores formais \cite{ref_reviewer_agent}.
-
-\item \textbf{Executor}
-
-Aplica as transformações aprovadas e coleta métricas reais de desempenho do banco de dados \cite{ref_executor_agent}.
-
-\end{itemize}
-
-O elemento central dessas arquiteturas é o \textit{feedback loop} \cite{ref_feedback_loop}. Métricas derivadas de comandos como \texttt{EXPLAIN} e \texttt{EXPLAIN ANALYZE} permitem comparar custo estimado e execução real, alimentando processos iterativos de autocorreção \cite{ref_explain_feedback}. Quando uma reescrita não produz o ganho esperado ou viola restrições semânticas, o sistema reinicia o ciclo de decisão incorporando o histórico da falha \cite{ref_self_correction}. Essa dinâmica aproxima a reescrita baseada em LLMs de sistemas adaptativos orientados por evidências operacionais reais.
-
-
-\subsection{Comparação Crítica, Limitações e Oportunidades de Pesquisa}
-
-A análise comparativa entre sistemas de reescrita de consultas baseados em \textit{Large Language Models} (LLMs) e abordagens de \textit{Learned Query Optimization} (LQO) evidencia uma mudança progressiva de paradigma na otimização de consultas SQL \cite{ref_paradigm_shift}. Enquanto os otimizadores aprendidos concentram-se predominantemente na melhoria interna dos mecanismos de planejamento e execução, os sistemas de \textit{SQL-to-SQL rewriting} deslocam o foco para transformações semânticas realizadas na camada de interface declarativa da consulta \cite{ref_lqo_vs_rewrite}. Essa distinção altera significativamente os mecanismos de decisão, os requisitos de validação e o grau de intervenção sobre o motor de banco de dados.
-
-\subsubsection{Limitações e Barreiras dos Sistemas Atuais}
-
-Apesar dos avanços recentes, a literatura aponta desafios relevantes que ainda restringem a adoção ampla de reescritores baseados em LLMs em ambientes corporativos \cite{ref_limitations_llm}.
-
-Um dos principais obstáculos está relacionado à confiança e à verificação da equivalência semântica \cite{ref_semantic_bottleneck}. Diferentemente de aplicações \textit{Text-to-SQL}, nas quais certo grau de ambiguidade é tolerável, a reescrita SQL exige preservação absoluta da lógica original da consulta. Verificadores formais baseados em lógica ou \textit{Satisfiability Modulo Theories} (SMT) apresentam cobertura limitada para consultas envolvendo agregações complexas, múltiplas junções ou subconsultas aninhadas \cite{ref_smt_limits}. Já mecanismos de validação por execução podem produzir falsos positivos quando os dados utilizados nos testes não contemplam todas as combinações relevantes de predicados \cite{ref_execution_validation_limit}.
-
-Outro fator crítico refere-se ao custo computacional e à latência de inferência \cite{ref_inference_cost}. Enquanto otimizadores tradicionais operam em escala de milissegundos, modelos de linguagem frequentemente demandam segundos para produzir uma resposta \cite{ref_latency_gap}. Em cenários de produção, o custo financeiro associado ao uso contínuo de APIs comerciais torna inviável a reescrita indiscriminada de todas as consultas, motivando o desenvolvimento de mecanismos de roteamento e seleção dinâmica de modelos (\textit{model routing}) \cite{ref_model_router}.
-
-A literatura também destaca problemas relacionados a alucinações e \textit{semantic drifting} \cite{ref_hallucinations}. Em determinadas situações, modelos podem sugerir regras inexistentes ou alterar inadvertidamente a lógica da consulta original, produzindo resultados incorretos ou regressões severas de desempenho \cite{ref_semantic_drift}. Além disso, tanto LLMs quanto otimizadores aprendidos frequentemente operam como caixas-pretas, reduzindo a capacidade de auditoria e dificultando a investigação de regressões por administradores de banco de dados \cite{ref_blackbox_problem}.
-
-\subsubsection{Comparação Técnica entre LQO e Sistemas de Reescrita via LLM}
-
-A Tabela~\ref{tab:lqo_llm_compare} sintetiza as diferenças arquiteturais entre os principais trabalhos da literatura.
-
-\begin{table}[ht]
-\centering
-\caption{Comparação entre sistemas de LQO e reescrita baseada em LLMs}
-\label{tab:lqo_llm_compare}
-\begin{tabular}{|p{2cm}|p{2.8cm}|p{3cm}|p{2.8cm}|p{3cm}|}
-\hline
-\textbf{Sistema} &
-\textbf{Espaço de Transformação} &
-\textbf{Mecanismo de Decisão} &
-\textbf{Uso de IA/LLM} &
-\textbf{Feedback e Resiliência} \\ \hline
-
-Neo &
-Espaço de plano &
-\textit{Value Network} (Tree-CNN) &
-\textit{Deep Learning} ponta-a-ponta &
-\textit{Bootstrapping} via PostgreSQL \\ \hline
-
-Bao &
-Conjunto de \textit{hints} &
-\textit{Thompson Sampling} &
-Aprendizado por reforço &
-Adaptativo ao \textit{workload} \\ \hline
-
-LLM-R2 &
-Seleção de regras &
-\textit{In-Context Learning} &
-LLM + modelo contrastivo &
-Equivalência via Calcite \\ \hline
-
-R-Bot &
-Seleção de regras &
-RAG + raciocínio passo-a-passo &
-LLM + recuperação híbrida &
-Auto-reflexão e \textit{recipes} \\ \hline
-
-QUITE &
-Espaço de consulta &
-Multiagentes + FSM &
-LLM agents + MDP &
-Feedback em tempo real \\ \hline
-
-LITHE &
-Espaço de consulta &
-MCTS sobre tokens &
-LLM + telemetria &
-Validação lógica e estatística \\ \hline
-
-\end{tabular}
-\end{table}
-
-A comparação evidencia diferenças substanciais entre as abordagens \cite{ref_compare_systems}. Neo e Bao concentram-se no interior do otimizador. O Neo propõe uma reconstrução profunda do modelo de custo e da seleção de planos, enquanto o Bao preserva a estrutura do otimizador tradicional e apenas orienta suas escolhas por meio de \textit{hints} físicos \cite{marcus2019neo,marcus2021bao}. Em ambos os casos, entretanto, não há atuação direta sobre a estrutura declarativa da consulta.
-
-Em contraste, LLM-R2 e R-Bot operam como orquestradores externos de regras e conhecimento especializado \cite{li2024llmr2,sun2025rbot}. O LLM-R2 restringe o espaço de decisão a regras previamente conhecidas, reduzindo riscos semânticos, enquanto o R-Bot introduz o uso de \textit{Retrieval-Augmented Generation} para recuperar receitas de otimização derivadas de documentação técnica e experiências anteriores.
-
-Sistemas mais recentes, como QUITE e LITHE, apresentam maior independência de regras fixas \cite{song2025quite,ref_lithe}. O QUITE utiliza arquitetura multiagente para iterar sobre a consulta até que o feedback operacional do banco indique melhoria efetiva de desempenho. Já o LITHE emprega \textit{Monte Carlo Tree Search} sobre probabilidades de geração de tokens, explorando alternativas de reescrita em regiões onde o modelo apresenta menor confiança estatística.
-
-\subsubsection{Lacunas Científicas e Oportunidades de Pesquisa}
-
-Embora os avanços recentes tenham ampliado significativamente o potencial da reescrita automática de consultas, diversas lacunas permanecem abertas \cite{ref_research_gaps}.
-
-Uma primeira limitação refere-se ao chamado \textit{impedance mismatch} semântico \cite{ref_impedance}. Existe um desalinhamento entre as transformações propostas pelos modelos de linguagem e as capacidades efetivamente suportadas pelos motores de execução atuais. Muitas reescritas semanticamente sofisticadas não podem ser traduzidas diretamente em regras genéricas de otimização.
-
-Outra oportunidade de pesquisa envolve o aprendizado automático de regras de transformação \cite{ref_rule_discovery}. Em vez de utilizar LLMs apenas em tempo de execução, torna-se possível empregá-los para descobrir novos padrões de otimização a partir de consultas lentas e posteriormente destilar esse conhecimento em regras nativas de baixo custo computacional.
-
-Questões de segurança e privacidade também emergem como preocupação crescente \cite{ref_security_rag}. O uso de RAG frequentemente exige acesso a esquemas, metadados e informações operacionais potencialmente sensíveis, tornando necessária a investigação de técnicas de anonimização e ofuscação de esquema.
-
-A literatura ainda aponta espaço para pesquisas envolvendo ajuste fino orientado ao domínio (\textit{domain fine-tuning}) \cite{ref_domain_finetune}. Grande parte dos estudos atuais depende exclusivamente de \textit{prompt engineering}, havendo pouca exploração do treinamento especializado com planos de execução, documentação de SGBDs e histórico de otimizações.
-
-Por fim, observa-se uma carência de \textit{benchmarks} dinâmicos \cite{ref_dynamic_benchmark}. Os conjuntos de avaliação predominantes permanecem estáticos e pouco representativos da variabilidade observada em ambientes corporativos reais. O desenvolvimento de estruturas experimentais capazes de incorporar deriva de dados, mudanças de \textit{workload} e feedback contínuo constitui uma oportunidade relevante para futuras investigações.
+De forma geral, os principais desafios atuais envolvem a garantia de correção semântica, a redução da latência dos modelos e a integração eficiente com sistemas existentes. Nesse cenário, a combinação entre aprendizado de máquina, reescrita de consultas e mecanismos de recuperação de conhecimento representa um caminho promissor para avanços na área.
 
 
 \section{Trabalhos Relacionados}
