@@ -11,7 +11,7 @@
 
 \usepackage{sbc-template}
 \usepackage{graphicx, url}
-\usepackage[utf8x]{inputenc}
+\usepackage[utf8]{inputenc}
 \usepackage[brazil]{babel}
 \usepackage[T1]{fontenc}
 \usepackage[english=american]{csquotes}
@@ -93,128 +93,147 @@ Passo Fundo -- RS -- Brasil
 \end{resumo}
 
 \section{Introdução}
-Cenários, motivação, justificativa, problema de pesquisa, objetivo geral e específicos (taxonomia de Bloom);
+
+Bancos de dados relacionais estão por trás de boa parte dos sistemas que usamos todos os dias, de aplicações corporativas a plataformas de análise. À medida que esses sistemas crescem e as consultas ficam mais complexas, o tempo que cada consulta leva para ser executada deixa de ser um detalhe e passa a ter impacto direto no custo de infraestrutura e na experiência de quem depende daquela informação. Por isso, otimizar consultas SQL é um problema antigo e, ao mesmo tempo, sempre atual.
+
+Tradicionalmente, esse trabalho fica a cargo do otimizador do próprio Sistema Gerenciador de Banco de Dados (SGBD), que escolhe um plano de execução com base em estimativas de custo e de cardinalidade. Acontece que essas estimativas nem sempre acertam, sobretudo quando há correlações complexas entre os dados ou quando a consulta foi escrita de forma pouco eficiente. Nesses casos, reescrever a consulta -- mantendo o mesmo resultado, mas mudando a forma como ela é expressa -- costuma render ganhos que o otimizador sozinho não alcança.
+
+É nesse ponto que os Modelos de Linguagem de Grande Escala (LLMs) entram em cena. Trabalhos recentes mostram que esses modelos conseguem sugerir reescritas de consultas com bons resultados \cite{li2024llmr2,sun2025rbot}, mas também trazem um problema conhecido: a geração livre pode produzir consultas que parecem corretas e não são, seja por alucinação, seja por desvio semântico. Em um ambiente de produção, uma reescrita que retorna dados diferentes do esperado é um risco que não dá para correr.
+
+A justificativa deste trabalho parte justamente dessa tensão. Um LLM pode ampliar o espaço de otimização para além das regras fixas, mas só é útil de verdade se houver alguma forma de garantir que a consulta reescrita continua equivalente à original e que ela é, de fato, mais rápida. Em vez de confiar cegamente no modelo, a proposta aqui é deixá-lo sugerir e usar o próprio banco de dados como juiz.
+
+Disso decorre o problema de pesquisa que orienta o estudo: é possível reescrever consultas SQL com o auxílio de LLMs de modo a melhorar o desempenho sem comprometer a corretude dos resultados?
+
+Para responder a essa pergunta, define-se como objetivo geral desenvolver e avaliar um mecanismo de reescrita de consultas SQL baseado em LLMs, apoiado por etapas de validação sintática, semântica e de desempenho conduzidas pelo próprio SGBD.
+
+Como objetivos específicos, o trabalho se propõe a:
+
+\begin{itemize}
+    \item levantar, na literatura, as principais técnicas de otimização e de reescrita de consultas baseadas em aprendizado de máquina e em modelos de linguagem;
+    \item projetar uma arquitetura não invasiva, capaz de intermediar a comunicação entre a consulta original, o LLM e o banco de dados;
+    \item implementar um processo de validação que combine verificação sintática, comparação semântica de resultados e análise dos planos de execução;
+    \item comparar o desempenho das consultas em três cenários -- sem reescrita, com reescrita sem validação e com reescrita validada;
+    \item avaliar a viabilidade da abordagem para uso em ambientes reais, considerando os ganhos de desempenho e a preservação da semântica.
+\end{itemize}
 
 \section{Referencial Teórico}
 
+Este capítulo reúne os conceitos e os trabalhos que sustentam a proposta. A discussão começa pela evolução da otimização de consultas e pela entrada do aprendizado de máquina nesse processo; em seguida, trata da reescrita de consultas com modelos de linguagem, da estimativa de cardinalidade e das arquiteturas que combinam recuperação de conhecimento e agentes. Ao final, uma síntese crítica organiza o que a literatura já consolidou e aponta os desafios que permanecem em aberto.
+
 \subsection{Evolução da Otimização de Consultas e Uso de Inteligência Artificial}
 
-A otimização de consultas em sistemas de gerenciamento de bancos de dados tem sido historicamente sustentada por três componentes centrais: a estimação de cardinalidade, o modelo de custo e a enumeração de planos. Nesse contexto, a qualidade do plano gerado depende diretamente da precisão das estimativas de volume de dados intermediários e da adequação da função de custo associada aos recursos computacionais.
+Durante décadas, a otimização de consultas em bancos de dados se apoiou sobre três pilares: a estimação de cardinalidade, o modelo de custo e a enumeração de planos. A qualidade do plano escolhido depende, em boa parte, de quão bem o otimizador prevê o volume de dados intermediários e de quão coerente é a função de custo em relação aos recursos disponíveis na máquina.
 
-Apesar de amplamente adotadas, essas abordagens apresentam limitações significativas em cenários contemporâneos, especialmente quando os dados apresentam correlações complexas entre atributos ou quando há variações frequentes na carga de trabalho. Nesses casos, erros de estimação podem comprometer a seleção do plano físico, resultando em degradação de desempenho \cite{marcus2019neo,marcus2021bao}.
+Esse arranjo dá conta de muitos casos, mas revela limitações importantes em cenários mais exigentes -- sobretudo quando existem correlações complexas entre atributos ou quando a carga de trabalho varia com frequência. Nessas situações, um erro de estimação pode levar o otimizador a escolher um plano físico inadequado, com perda direta de desempenho \cite{marcus2019neo,marcus2021bao}.
 
-Nesse contexto, surge o paradigma de \textit{Learned Query Optimization} (LQO), no qual técnicas de aprendizado de máquina são incorporadas ao processo de otimização. O sistema \textit{Neo} propõe um otimizador baseado em redes neurais profundas capaz de aprender padrões de execução a partir de consultas reais, adaptando-se dinamicamente ao comportamento dos dados \cite{marcus2019neo}. De forma complementar, o sistema \textit{Bao} introduz um mecanismo de otimização híbrida que utiliza aprendizado por reforço para fornecer sugestões de execução por consulta, melhorando o desempenho em cenários reais \cite{marcus2021bao}.
+Foi diante desse tipo de limitação que ganhou força o paradigma de \textit{Learned Query Optimization} (LQO), que traz o aprendizado de máquina para dentro do próprio processo de otimização. O \textit{Neo}, por exemplo, emprega redes neurais profundas para aprender padrões de execução a partir de consultas reais e se adaptar ao comportamento dos dados \cite{marcus2019neo}. O \textit{Bao}, por sua vez, adota uma abordagem híbrida baseada em aprendizado por reforço, oferecendo sugestões de execução consulta a consulta e melhorando o desempenho em ambientes reais \cite{marcus2021bao}.
 
 \subsection{Reescrita de Consultas SQL com Modelos de Linguagem}
 
-A reescrita de consultas SQL tem como objetivo transformar uma consulta em outra semanticamente equivalente, porém mais eficiente do ponto de vista computacional. Diferentemente de abordagens de \textit{Text-to-SQL}, o foco da reescrita reside em modificar consultas já estruturadas, mantendo a equivalência lógica dos resultados.
+Reescrever uma consulta SQL significa transformá-la em outra que produza exatamente o mesmo resultado, porém de forma mais eficiente. Diferentemente do que ocorre em abordagens de \textit{Text-to-SQL}, aqui o ponto de partida já é uma consulta estruturada; o desafio está em alterá-la sem quebrar a equivalência lógica entre o que entra e o que sai.
 
-O método \textit{LLM-R2} utiliza modelos de linguagem para sugerir regras de reescrita, combinando aprendizado contrastivo para aprimorar representações de consultas \cite{li2024llmr2}. De maneira semelhante, o sistema \textit{R-Bot} emprega uma abordagem baseada em recuperação de evidências estruturais e semânticas, com o objetivo de orientar o modelo e reduzir erros durante o processo de reescrita \cite{sun2025rbot}.
+O \textit{LLM-R2} recorre a modelos de linguagem para sugerir regras de reescrita e usa aprendizado contrastivo para refinar a forma como as consultas são representadas \cite{li2024llmr2}. O \textit{R-Bot} segue uma linha parecida, mas apoia o modelo na recuperação de evidências estruturais e semânticas, reduzindo os erros ao longo do processo \cite{sun2025rbot}.
 
-Além disso, o sistema \textit{QUITE} utiliza uma arquitetura baseada em múltiplos agentes que interagem por meio de um fluxo controlado, explorando estratégias de reescrita com realimentação do sistema de banco de dados \cite{song2025quite}. Já o sistema \textit{LITHE} propõe mecanismos adicionais para garantir a correção semântica das consultas geradas, incorporando validações baseadas em análise lógica e estatística \cite{dharwada2026lithe}.
+Há ainda propostas que exploram a coordenação entre vários componentes. O \textit{QUITE} organiza múltiplos agentes em um fluxo controlado e testa estratégias de reescrita a partir do retorno do próprio banco de dados \cite{song2025quite}. O \textit{LITHE} acrescenta a esse cenário verificações de correção semântica fundamentadas em análise lógica e estatística \cite{dharwada2026lithe}.
 
 \subsection{Estimativa de Cardinalidade e Modelos Aprendidos}
 
-A estimação de cardinalidade é amplamente reconhecida como um dos principais fatores que influenciam a qualidade do plano de execução em sistemas de banco de dados, pois determina a previsão do volume de dados manipulados em cada etapa da execução da consulta.
+A estimativa de cardinalidade costuma ser apontada como um dos fatores que mais pesam na qualidade do plano de execução, justamente por antecipar o volume de dados que será manipulado em cada etapa da consulta.
 
-O modelo \textit{NeuroCard} propõe um estimador baseado em redes neurais autorregressivas capaz de capturar correlações complexas entre múltiplas tabelas sem assumir independência entre atributos \cite{yang2021neurocard}. Por outro lado, o método \textit{FLAT} introduz um modelo gráfico que combina fatoração independente e condicional, buscando equilibrar precisão e eficiência computacional \cite{zhu2021flat}.
+O \textit{NeuroCard} ataca esse problema com redes neurais autorregressivas, capazes de capturar correlações complexas entre várias tabelas sem partir do pressuposto de que os atributos são independentes \cite{yang2021neurocard}. O \textit{FLAT} segue outro caminho: combina fatoração independente e condicional em um modelo gráfico, em busca de um meio-termo entre precisão e custo computacional \cite{zhu2021flat}.
 
-Essas abordagens evidenciam uma evolução significativa em relação aos métodos tradicionais, permitindo estimativas mais precisas e impactando diretamente o desempenho das consultas executadas.
+Em comum, esses trabalhos mostram um avanço claro frente aos métodos tradicionais, com estimativas mais confiáveis e reflexo direto no desempenho das consultas executadas.
 
 \subsection{Arquiteturas Baseadas em Recuperação e Agentes}
 
-Abordagens recentes têm explorado a integração de modelos de linguagem com mecanismos de recuperação de conhecimento, formando pipelines baseados em \textit{Retrieval-Augmented Generation} (RAG). Nesses sistemas, consultas são convertidas em representações vetoriais para recuperar evidências relevantes que orientam o processo de geração.
+Boa parte das propostas mais recentes combina modelos de linguagem com mecanismos de recuperação de conhecimento, formando pipelines no estilo \textit{Retrieval-Augmented Generation} (RAG). A ideia é converter as consultas em representações vetoriais e, a partir delas, recuperar evidências que ajudem a orientar a geração.
 
-O sistema \textit{R-Bot} exemplifica esse modelo ao combinar recuperação híbrida com geração guidada por evidências \cite{sun2025rbot}. De forma complementar, o \textit{QUITE} utiliza múltiplos agentes responsáveis por planejamento, validação e execução de reescritas, promovendo um processo iterativo de aprimoramento \cite{song2025quite}.
+O \textit{R-Bot} ilustra bem essa estratégia ao unir recuperação híbrida e geração guiada por evidências \cite{sun2025rbot}. O \textit{QUITE} chega a um resultado semelhante por outro meio, distribuindo entre diferentes agentes as tarefas de planejamento, validação e execução das reescritas, em um processo iterativo \cite{song2025quite}.
 
-Essas arquiteturas demonstram que a utilização de conhecimento externo e mecanismos de validação iterativa contribuem significativamente para reduzir erros e aumentar a robustez das soluções baseadas em modelos de linguagem \cite{sun2025rbot,song2025quite,dharwada2026lithe}.
+Em conjunto, esses sistemas sugerem que apoiar o modelo em conhecimento externo e em validações sucessivas reduz erros e torna a solução mais robusta \cite{sun2025rbot,song2025quite,dharwada2026lithe}.
 
 \subsection{Síntese Crítica da Literatura}
 
-A literatura recente evidencia duas direções principais na evolução da otimização de consultas. A primeira envolve a incorporação de aprendizado de máquina diretamente no núcleo do otimizador, com exemplos como \textit{Neo}, \textit{Bao}, \textit{NeuroCard} e \textit{FLAT} \cite{marcus2019neo,marcus2021bao,yang2021neurocard,zhu2021flat}.  
+A literatura recente aponta para dois caminhos principais. O primeiro leva o aprendizado de máquina para dentro do otimizador, como fazem o \textit{Neo}, o \textit{Bao}, o \textit{NeuroCard} e o \textit{FLAT} \cite{marcus2019neo,marcus2021bao,yang2021neurocard,zhu2021flat}.
 
-A segunda direção explora a reescrita externa de consultas por meio de modelos de linguagem, como observado em \textit{LLM-R2}, \textit{R-Bot}, \textit{QUITE} e \textit{LITHE} \cite{li2024llmr2,sun2025rbot,song2025quite,dharwada2026lithe}.
+O segundo mantém o otimizador intacto e atua de fora, reescrevendo as consultas com o apoio de modelos de linguagem -- é o caso do \textit{LLM-R2}, do \textit{R-Bot}, do \textit{QUITE} e do \textit{LITHE} \cite{li2024llmr2,sun2025rbot,song2025quite,dharwada2026lithe}.
 
-De forma geral, os principais desafios atuais envolvem a garantia de correção semântica, a redução da latência dos modelos e a integração eficiente com sistemas existentes. Nesse cenário, a combinação entre aprendizado de máquina, reescrita de consultas e mecanismos de recuperação de conhecimento representa um caminho promissor para avanços na área.
+Independentemente do caminho, os desafios em aberto se repetem: garantir a correção semântica, controlar a latência dos modelos e integrar tudo isso a sistemas que já estão em produção. É nesse encontro entre aprendizado de máquina, reescrita de consultas e recuperação de conhecimento que parece estar o terreno mais promissor para os próximos avanços.
 
 
 \section{Trabalhos Relacionados}
 
-Nesta seção, são analisados os principais estudos que utilizam Inteligência Artificial, especificamente LLMs e modelos aprendidos, para a reescrita e otimização de consultas SQL.
+Esta seção reúne os principais estudos que aplicam Inteligência Artificial -- em especial LLMs e modelos aprendidos -- à reescrita e à otimização de consultas SQL. Ao final, destaca-se em que a proposta deste trabalho se diferencia deles.
 
 \begin{itemize}
 
-\item \textbf{O uso da Inteligência Artificial na otimização de consultas em bancos de dados (Amaral, Andrade e Campos, 2025)}
+\item \textbf{O uso da Inteligência Artificial na otimização de consultas em bancos de dados} \cite{amaral2025}
 
-Os autores investigaram a viabilidade do uso do ChatGPT para a reescrita semântica de consultas em ambientes PostgreSQL. O estudo utilizou uma metodologia experimental com scripts Python para automatizar a execução e coleta de métricas, focando em transformações como o uso de \textit{Common Table Expressions} (CTEs), pré-agregações e redução de subconsultas. Os resultados demonstraram que a intervenção da IA pode reduzir o tempo de execução em até 90\% em cenários complexos com múltiplos \textit{joins}, promovendo uma racionalização no uso de índices e tabelas.
+Os autores investigam até que ponto o ChatGPT é capaz de reescrever consultas de forma semântica em ambientes PostgreSQL. Para isso, montam um experimento com scripts em Python que automatizam a execução das consultas e a coleta de métricas, com foco em transformações como o uso de \textit{Common Table Expressions} (CTEs), pré-agregações e redução de subconsultas. Em cenários complexos, com muitos \textit{joins}, a reescrita assistida por IA chegou a reduzir o tempo de execução em até 90\%, além de racionalizar o uso de índices e tabelas.
 
-\item \textbf{LLM-R2: A Large Language Model Enhanced Rule-based Rewrite System (Li et al., 2024)}
+\item \textbf{LLM-R2: A Large Language Model Enhanced Rule-based Rewrite System} \cite{li2024llmr2}
 
-Este trabalho propõe o sistema LLM-R2, que utiliza LLMs para sugerir sequências de regras de reescrita para plataformas como o Apache Calcite. O diferencial técnico reside no uso de um modelo contrastivo treinado via currículo para selecionar demonstrações (\textit{few-shot}) estruturalmente similares à consulta de entrada. Ao delegar a execução final das regras a um motor de banco de dados, o sistema garante executabilidade e equivalência semântica, superando abordagens de geração livre suscetíveis a alucinações.
+O LLM-R2 usa LLMs para sugerir sequências de regras de reescrita voltadas a plataformas como o Apache Calcite. Seu principal trunfo é um modelo contrastivo, treinado por currículo, que seleciona demonstrações (\textit{few-shot}) estruturalmente parecidas com a consulta de entrada. Como a execução final das regras fica a cargo do próprio motor do banco, o sistema garante que a reescrita seja executável e semanticamente equivalente -- algo que abordagens de geração livre, mais sujeitas a alucinações, nem sempre conseguem.
 
-\item \textbf{R-Bot: An LLM-based Query Rewrite System (Sun et al., 2025)}
+\item \textbf{R-Bot: An LLM-based Query Rewrite System} \cite{sun2025rbot}
 
-O estudo introduz o R-Bot, um sistema que busca mitigar alucinações por meio de uma arquitetura baseada em \textit{Retrieval-Augmented Generation} (RAG). O sistema utiliza recuperação híbrida, combinando características estruturais e semânticas, para buscar ``receitas de reescrita'' e evidências provenientes de fóruns técnicos e manuais de SGBDs. O processo é refinado por um mecanismo de reescrita passo a passo com autorreflexão, permitindo que o modelo compreenda as inter-relações entre regras antes da aplicação final.
+O R-Bot busca reduzir alucinações apoiando-se em uma arquitetura de \textit{Retrieval-Augmented Generation} (RAG). A recuperação é híbrida: combina características estruturais e semânticas para localizar ``receitas de reescrita'' e evidências em fóruns técnicos e manuais de SGBDs. A reescrita acontece passo a passo, com autorreflexão, o que permite ao modelo entender como as regras se relacionam antes de aplicá-las.
 
-\item \textbf{LITHE: A Query Rewrite Advisor using LLMs (Dharwada et al., 2025)}
+\item \textbf{LITHE: A Query Rewrite Advisor using LLMs} \cite{dharwada2026lithe}
 
-Os autores propõem o LITHE, sistema que realiza transformações diretamente no espaço de consulta (\textit{SQL-to-SQL}) em vez do espaço de plano físico. A abordagem utiliza regras sensíveis ao banco de dados, fundamentadas em seletividade e metadados, combinadas com uma busca em árvore de Monte Carlo (\textit{Monte Carlo Tree Search -- MCTS}) guiada pelas probabilidades de \textit{tokens} do LLM. Essa estratégia permite explorar múltiplos caminhos de reescrita quando a confiança do modelo é baixa, alcançando acelerações expressivas em comparação aos otimizadores nativos.
+O LITHE trabalha diretamente no espaço da consulta (\textit{SQL-to-SQL}), e não no espaço do plano físico. Ele aplica regras sensíveis ao banco -- apoiadas em seletividade e metadados -- e as combina com uma busca em árvore de Monte Carlo (\textit{Monte Carlo Tree Search} -- MCTS) guiada pelas probabilidades de \textit{tokens} do LLM. Quando a confiança do modelo é baixa, essa estratégia abre espaço para explorar vários caminhos de reescrita, alcançando ganhos expressivos em relação aos otimizadores nativos.
 
-\item \textbf{QUITE: A Query Rewrite System Beyond Rules with LLM Agents (Song et al., 2025)}
+\item \textbf{QUITE: A Query Rewrite System Beyond Rules with LLM Agents} \cite{song2025quite}
 
-Este trabalho apresenta o QUITE, um \textit{framework} baseado em múltiplos agentes controlados por uma Máquina de Estados Finita (\textit{Finite State Machine -- FSM}). O sistema utiliza feedback em tempo real do banco de dados, obtido via comandos \texttt{EXPLAIN}, além de técnicas de injeção de \textit{hints} para garantir que o plano otimizado seja seguido pelo motor de execução. Diferentemente de métodos puramente baseados em regras, o QUITE permite a descoberta de estratégias de otimização que não podem ser expressas por transformações fixas.
+O QUITE é um \textit{framework} de múltiplos agentes coordenados por uma Máquina de Estados Finita (\textit{Finite State Machine} -- FSM). Ele recebe \textit{feedback} em tempo real do banco por meio de comandos \texttt{EXPLAIN} e injeta \textit{hints} para garantir que o plano otimizado seja de fato seguido na execução. Por não depender apenas de regras fixas, consegue encontrar otimizações que transformações pré-definidas não alcançariam.
 
 \end{itemize}
 
-Diferente das abordagens de otimização interna, como Neo e Bao, que buscam substituir ou modificar componentes do otimizador do SGBD, e dos sistemas de reescrita baseados exclusivamente em regras ou focados apenas na redução isolada de latência, este trabalho propõe uma abordagem de reescrita de consultas SQL do tipo \textit{SQL-to-SQL} baseada em Modelos de Linguagem de Grande Escala (LLMs), apoiada por mecanismos de validação e análise conduzidos pelo próprio sistema gerenciador de banco de dados.
+Diferentemente das abordagens de otimização interna -- como o Neo e o Bao, que substituem ou modificam partes do otimizador do SGBD -- e dos sistemas presos a regras fixas ou voltados apenas a reduzir latência, este trabalho propõe uma reescrita \textit{SQL-to-SQL} baseada em LLMs, com validação e análise conduzidas pelo próprio gerenciador de banco de dados.
 
-O diferencial da proposta reside na busca por um equilíbrio entre desempenho e preservação semântica. Enquanto abordagens de geração livre oferecem maior flexibilidade de transformação, frequentemente sofrem com problemas de \textit{semantic drift}, alucinações e regressões de desempenho, sistemas rigidamente baseados em regras limitam o espaço de otimização a transformações previamente codificadas. Neste contexto, o presente trabalho propõe uma camada externa e não invasiva de otimização, na qual o LLM atua como agente de reescrita semântica, enquanto o SGBD exerce o papel de mecanismo de validação e evidência técnica.
+A proposta se diferencia por buscar um equilíbrio entre desempenho e preservação semântica. A geração livre oferece mais liberdade de transformação, mas convive com \textit{semantic drift}, alucinações e regressões de desempenho; os sistemas rígidos, por outro lado, ficam limitados às transformações que alguém previu e codificou de antemão. A ideia aqui é colocar o LLM como agente de reescrita semântica em uma camada externa e não invasiva, enquanto o SGBD assume o papel de validar e fornecer evidências técnicas.
 
-A abordagem proposta estrutura-se em múltiplos estágios de verificação. Inicialmente, a consulta reescrita é submetida à validação sintática por meio do \textit{parser} do banco de dados. Em seguida, comandos como \texttt{EXPLAIN} e \texttt{EXPLAIN ANALYZE} são utilizados para analisar o plano de execução e comparar o custo estimado entre a consulta original e a versão otimizada. Por fim, a equivalência da transformação é avaliada por meio da comparação dos resultados produzidos pelas consultas, reduzindo o risco de alterações indevidas na semântica original.
+A verificação acontece em etapas. Primeiro, a consulta reescrita passa pelo \textit{parser} do banco, que confere sua validade sintática. Em seguida, comandos como \texttt{EXPLAIN} e \texttt{EXPLAIN ANALYZE} permitem analisar o plano de execução e comparar o custo estimado entre a versão original e a reescrita. Por fim, comparam-se os resultados das duas consultas para confirmar que a transformação não alterou a semântica original.
 
-Dessa forma, o sistema proposto estabelece um ciclo em que o LLM propõe transformações, o otimizador do SGBD fornece evidências de desempenho e os mecanismos de validação asseguram a correção da reescrita. Como resultado, busca-se desenvolver uma solução de otimização prática, explicável e compatível com diferentes SGBDs relacionais, preservando a confiabilidade necessária para aplicações corporativas e ambientes reais de produção.
+O ciclo, então, se fecha assim: o LLM propõe a transformação, o otimizador do SGBD aponta os ganhos de desempenho e os mecanismos de validação asseguram que a reescrita está correta. A meta é chegar a uma solução prática, explicável e compatível com diferentes SGBDs relacionais, confiável o bastante para uso corporativo e ambientes de produção.
 
 \section{Materiais e Métodos}
 
-Este trabalho caracteriza-se como uma pesquisa aplicada, de abordagem quantitativa e caráter experimental. A natureza aplicada decorre da busca por uma solução para um problema real relacionado à otimização de consultas SQL em sistemas gerenciadores de bancos de dados. A abordagem quantitativa é adotada por utilizar métricas objetivas de desempenho para avaliar os resultados obtidos, enquanto o caráter experimental está associado à implementação de um protótipo funcional e à realização de testes controlados em ambiente computacional.
+Este trabalho se caracteriza como uma pesquisa aplicada, de abordagem quantitativa e natureza experimental. É aplicada porque parte de um problema concreto -- a otimização de consultas SQL em bancos de dados; é quantitativa porque recorre a métricas objetivas de desempenho para avaliar os resultados; e é experimental porque envolve a construção de um protótipo funcional e a realização de testes controlados em ambiente computacional.
 
-A proposta consiste no desenvolvimento de um mecanismo de reescrita de consultas SQL baseado em Modelos de Linguagem de Grande Escala (Large Language Models -- LLMs), complementado por etapas de validação sintática, validação semântica e análise de desempenho baseada no feedback do próprio otimizador do banco de dados. O objetivo é verificar se consultas reescritas automaticamente podem apresentar melhor desempenho sem comprometer a corretude dos resultados produzidos.
+A proposta é desenvolver um mecanismo de reescrita de consultas SQL baseado em Modelos de Linguagem de Grande Escala (\textit{Large Language Models} -- LLMs), acompanhado de etapas de validação sintática e semântica e de uma análise de desempenho apoiada no \textit{feedback} do próprio otimizador. Em essência, a pergunta que orienta o estudo é direta: consultas reescritas automaticamente conseguem rodar mais rápido sem comprometer a corretude dos resultados?
 
 \subsection{Arquitetura da Solução Proposta}
 
-A arquitetura proposta é composta por uma camada intermediária responsável por receber consultas SQL, encaminhá-las para um modelo de linguagem e avaliar a viabilidade das transformações sugeridas.
+A arquitetura proposta funciona como uma camada intermediária, encarregada de receber as consultas, encaminhá-las ao modelo de linguagem e avaliar se as transformações sugeridas fazem sentido.
 
-Inicialmente, uma consulta SQL original é submetida ao sistema. Em seguida, a consulta é enviada ao LLM, que recebe instruções específicas para produzir uma versão semanticamente equivalente e potencialmente mais eficiente. Após a geração da nova consulta, são executadas etapas de validação destinadas a verificar sua corretude e seu impacto sobre o desempenho.
+O fluxo começa com uma consulta SQL original submetida ao sistema. Ela é então enviada ao LLM, que recebe instruções específicas para devolver uma versão semanticamente equivalente e, idealmente, mais eficiente. Gerada a nova consulta, entram em cena as etapas de validação, responsáveis por verificar tanto a corretude quanto o impacto sobre o desempenho.
 
-A solução foi concebida para atuar de forma não invasiva, sem necessidade de alterações no núcleo do Sistema Gerenciador de Banco de Dados (SGBD). Dessa forma, o mecanismo pode ser utilizado como uma camada complementar aos otimizadores já existentes.
+Vale destacar que a solução foi pensada para ser não invasiva: ela não exige nenhuma alteração no núcleo do Sistema Gerenciador de Banco de Dados (SGBD) e pode ser acoplada como complemento aos otimizadores que já existem.
 
 \subsection{Processo de Reescrita de Consultas}
 
-O processo de reescrita tem início com a submissão de uma consulta SQL ao sistema. A consulta original é utilizada como entrada para o modelo de linguagem, que recebe um conjunto de instruções voltadas à otimização da estrutura lógica da consulta.
+Tudo começa quando uma consulta SQL é submetida ao sistema. Essa consulta original serve de entrada para o modelo de linguagem, que recebe um conjunto de instruções voltadas a melhorar a estrutura lógica da consulta.
 
-As transformações esperadas incluem a substituição de subconsultas por junções, utilização de Common Table Expressions (CTEs), simplificação de predicados, reorganização de filtros e eliminação de operações redundantes. Essas estratégias foram identificadas na literatura como mecanismos capazes de reduzir custos de execução e melhorar o aproveitamento dos recursos computacionais.
+Entre as transformações esperadas estão a troca de subconsultas por junções, o uso de Common Table Expressions (CTEs), a simplificação de predicados, a reorganização de filtros e a eliminação de operações redundantes -- estratégias que a literatura já associa à redução de custos de execução e ao melhor aproveitamento dos recursos computacionais.
 
-O modelo de linguagem não possui autonomia para substituir automaticamente a consulta original. Toda reescrita gerada deve passar pelas etapas de validação definidas neste trabalho antes de ser considerada uma alternativa válida.
+Convém reforçar que o modelo não tem autonomia para trocar a consulta original por conta própria. Toda reescrita precisa passar pelas etapas de validação definidas neste trabalho antes de ser aceita como alternativa válida.
 
 \subsection{Validação das Consultas Reescritas}
 
-Considerando os riscos de alucinações e desvios semânticos observados na literatura, foi definida uma estratégia de validação em múltiplos estágios.
+Como a literatura registra riscos reais de alucinação e de desvio semântico, a validação foi organizada em múltiplos estágios.
 
-A primeira etapa consiste na validação sintática, realizada pelo próprio parser do banco de dados. Consultas que apresentarem erros de compilação ou incompatibilidades estruturais são descartadas automaticamente.
+O primeiro é a validação sintática, feita pelo próprio \textit{parser} do banco: consultas com erro de compilação ou incompatibilidades estruturais são descartadas de imediato.
 
-Na sequência, é realizada a validação semântica. Nessa etapa, a consulta original e a consulta reescrita são executadas sobre o mesmo conjunto de dados e seus resultados são comparados. Caso sejam identificadas diferenças entre os conjuntos retornados, a reescrita é rejeitada.
+Depois vem a validação semântica. Aqui, a consulta original e a reescrita rodam sobre o mesmo conjunto de dados e seus resultados são comparados; havendo qualquer diferença entre os conjuntos retornados, a reescrita é rejeitada.
 
-Por fim, realiza-se a validação de desempenho utilizando informações fornecidas pelo próprio otimizador do banco de dados. São analisados os planos de execução gerados pelos comandos \texttt{EXPLAIN} e \texttt{EXPLAIN ANALYZE}, permitindo comparar custos estimados, operadores utilizados e tempos de execução observados.
-
-Somente consultas que preservarem a equivalência semântica e apresentarem melhoria de desempenho serão consideradas otimizações válidas.
+Por último, a validação de desempenho se apoia nas informações do otimizador. Os planos gerados por \texttt{EXPLAIN} e \texttt{EXPLAIN ANALYZE} permitem comparar custos estimados, operadores e tempos de execução. Só é considerada uma otimização válida a consulta que preserva a equivalência semântica e, ao mesmo tempo, melhora o desempenho.
 
 \subsection{Ambiente Experimental}
 
-Os experimentos serão realizados utilizando o PostgreSQL como Sistema Gerenciador de Banco de Dados. A escolha ocorre em função de sua ampla utilização em ambientes acadêmicos e corporativos, bem como pela disponibilidade de ferramentas nativas de análise de desempenho.
+Os experimentos serão conduzidos no PostgreSQL, escolhido tanto por sua presença consolidada em ambientes acadêmicos e corporativos quanto pelas ferramentas nativas de análise de desempenho que oferece.
 
-O protótipo será desenvolvido na linguagem Python, escolhida por sua facilidade de integração com bancos de dados relacionais e plataformas de Inteligência Artificial.
-
-Entre as tecnologias utilizadas destacam-se:
+O protótipo será escrito em Python, linguagem que se integra com facilidade a bancos relacionais e a plataformas de Inteligência Artificial. Entre as tecnologias previstas estão:
 
 \begin{itemize}
     \item PostgreSQL;
@@ -225,44 +244,35 @@ Entre as tecnologias utilizadas destacam-se:
     \item Matplotlib.
 \end{itemize}
 
-O SQLAlchemy será utilizado para gerenciamento das conexões e execução das consultas SQL. O Psycopg atuará como driver de comunicação com o PostgreSQL. O Pandas será empregado na manipulação e comparação dos resultados retornados pelas consultas, enquanto o Matplotlib será utilizado para geração dos gráficos e análises estatísticas.
+O SQLAlchemy cuidará das conexões e da execução das consultas SQL, enquanto o Psycopg atuará como driver de comunicação com o PostgreSQL. Já o Pandas será usado para manipular e comparar os resultados retornados pelas consultas, e o Matplotlib, para gerar os gráficos e apoiar as análises estatísticas.
 
 \subsection{Modelo de Linguagem Utilizado}
 
-A etapa de reescrita será realizada por meio de um Modelo de Linguagem de Grande Escala capaz de executar tarefas de SQL-to-SQL Query Rewriting.
+A reescrita propriamente dita ficará a cargo de um Modelo de Linguagem de Grande Escala capaz de lidar com tarefas de \textit{SQL-to-SQL Query Rewriting}.
 
-Os experimentos poderão utilizar modelos como GPT-4o, GPT-5, DeepSeek ou Llama 3, dependendo da disponibilidade de acesso e dos recursos computacionais disponíveis durante a execução do estudo.
-
-A escolha do modelo será baseada na qualidade das reescritas produzidas, na estabilidade dos resultados obtidos e na viabilidade de utilização dentro do ambiente experimental.
+A depender da disponibilidade de acesso e dos recursos computacionais ao longo do estudo, os experimentos poderão recorrer a modelos como GPT-4o, GPT-5, DeepSeek ou Llama 3. A decisão levará em conta a qualidade das reescritas produzidas, a estabilidade dos resultados e a viabilidade de uso dentro do ambiente experimental montado.
 
 \subsection{Conjunto de Dados}
 
-A avaliação experimental utilizará bases amplamente empregadas na literatura de otimização de consultas e desempenho de bancos de dados.
-
-Entre os conjuntos de dados considerados destacam-se o TPC-H, o TPC-DS e o Join Order Benchmark (JOB), construído a partir da base IMDb. Esses benchmarks contêm consultas analíticas com diferentes níveis de complexidade, envolvendo múltiplas junções, agregações e operações de filtragem.
-
-A utilização desses conjuntos permite comparar os resultados obtidos com trabalhos relacionados e garantir maior reprodutibilidade dos experimentos.
+A avaliação utilizará bases consagradas na literatura de otimização de consultas e desempenho de bancos de dados. Entre as consideradas estão o TPC-H, o TPC-DS e o Join Order Benchmark (JOB), montado a partir da base IMDb. Esses benchmarks reúnem consultas analíticas de diferentes níveis de complexidade, com múltiplas junções, agregações e operações de filtragem. Trabalhar com eles ajuda tanto a comparar os resultados com os de trabalhos relacionados quanto a garantir maior reprodutibilidade dos experimentos.
 
 \subsection{Cenários de Avaliação}
 
-A avaliação será conduzida em três cenários distintos.
+A avaliação será feita em três cenários distintos.
 
-No primeiro cenário, as consultas serão executadas sem qualquer modificação, utilizando exclusivamente o otimizador nativo do PostgreSQL.
+No primeiro, as consultas rodam sem nenhuma alteração, apenas com o otimizador nativo do PostgreSQL.
 
-No segundo cenário, as consultas serão reescritas pelo modelo de linguagem antes da execução, sem aplicação de mecanismos adicionais de validação.
+No segundo, passam pela reescrita do modelo de linguagem antes de serem executadas, mas sem nenhum mecanismo adicional de validação.
 
-No terceiro cenário, as consultas reescritas serão submetidas ao processo completo de validação proposto neste trabalho, envolvendo verificações sintáticas, semânticas e análise dos planos de execução.
+No terceiro, as consultas reescritas percorrem todo o processo de validação proposto aqui, com as verificações sintática, semântica e de plano de execução.
 
-A comparação entre os três cenários permitirá avaliar não apenas o potencial de otimização dos LLMs, mas também a eficácia dos mecanismos de validação na prevenção de regressões de desempenho e erros semânticos.
+Comparar os três cenários permite enxergar não só o potencial de otimização dos LLMs, mas também o quanto os mecanismos de validação ajudam a evitar regressões de desempenho e erros semânticos.
 
 \subsection{Métricas de Avaliação}
 
-A análise dos resultados será realizada por meio de métricas objetivas de desempenho.
+A análise se baseará em métricas objetivas de desempenho: o tempo total de execução, o custo estimado do plano, a quantidade de linhas processadas, a taxa de sucesso das reescritas, o percentual de consultas efetivamente otimizadas e o número de reescritas rejeitadas ao longo da validação.
 
-Serão observados o tempo total de execução, o custo estimado do plano de execução, a quantidade de linhas processadas, a taxa de sucesso das reescritas, o percentual de consultas efetivamente otimizadas e a quantidade de reescritas rejeitadas durante o processo de validação.
-
-Os resultados obtidos serão comparados estatisticamente entre os diferentes cenários experimentais, permitindo verificar a efetividade da abordagem proposta e sua viabilidade para aplicação em ambientes reais.
-```
+Esses números serão comparados estatisticamente entre os cenários, o que deve indicar se a abordagem proposta é eficaz e se faz sentido aplicá-la em ambientes reais.
 
 
 \section{Resultados e Discussão}

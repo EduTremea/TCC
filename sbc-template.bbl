@@ -19,6 +19,55 @@
 
 \refsection{0}
   \datalist[entry]{nty/global//global/global/global}
+    \entry{amaral2025}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=9e5795a497e750919b9440f2fb0668e5}{%
+           family={Amaral},
+           familyi={A\bibinitperiod},
+           given={Kharolayne\bibnamedelimb Patrícia\bibnamedelimb Nogueira\bibnamedelima do},
+           giveni={K\bibinitperiod\bibinitdelim P\bibinitperiod\bibinitdelim N\bibinitperiod\bibinitdelim d\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2b2a236caa134b08b40e5b3b96d953df}{%
+           family={Andrade},
+           familyi={A\bibinitperiod},
+           given={Lucas\bibnamedelimb Pereira\bibnamedelima de},
+           giveni={L\bibinitperiod\bibinitdelim P\bibinitperiod\bibinitdelim d\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=cbd39b268c1b03b7788861682e214a91}{%
+           family={Campos},
+           familyi={C\bibinitperiod},
+           given={Edilene\bibnamedelimb Aparecida\bibnamedelimb Veneruchi\bibnamedelima de},
+           giveni={E\bibinitperiod\bibinitdelim A\bibinitperiod\bibinitdelim V\bibinitperiod\bibinitdelim d\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{1893bfcbe504232bb4fe228f3a76cb39}
+      \strng{fullhash}{1893bfcbe504232bb4fe228f3a76cb39}
+      \strng{fullhashraw}{1893bfcbe504232bb4fe228f3a76cb39}
+      \strng{bibnamehash}{1893bfcbe504232bb4fe228f3a76cb39}
+      \strng{authorbibnamehash}{1893bfcbe504232bb4fe228f3a76cb39}
+      \strng{authornamehash}{1893bfcbe504232bb4fe228f3a76cb39}
+      \strng{authorfullhash}{1893bfcbe504232bb4fe228f3a76cb39}
+      \strng{authorfullhashraw}{1893bfcbe504232bb4fe228f3a76cb39}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Revista Camalotes -- RECAM}
+      \field{title}{O uso da Inteligência Artificial na otimização de consultas em bancos de dados}
+      \field{urlday}{9}
+      \field{urlmonth}{6}
+      \field{urlyear}{2026}
+      \field{year}{2025}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://periodicos.insted.edu.br/recam/index
+      \endverb
+      \verb{url}
+      \verb https://periodicos.insted.edu.br/recam/index
+      \endverb
+    \endentry
     \entry{dharwada2026lithe}{inproceedings}{}{}
       \name{author}{4}{}{%
         {{un=0,uniquepart=base,hash=5fecb17ef144a4b543d5c4c66c39271d}{%
