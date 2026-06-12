@@ -96,11 +96,11 @@ Passo Fundo -- RS -- Brasil
 
 Bancos de dados relacionais estão por trás de boa parte dos sistemas que usamos todos os dias, de aplicações corporativas a plataformas de análise. À medida que esses sistemas crescem e as consultas ficam mais complexas, o tempo que cada consulta leva para ser executada deixa de ser um detalhe e passa a ter impacto direto no custo de infraestrutura e na experiência de quem depende daquela informação. Por isso, otimizar consultas SQL é um problema antigo e, ao mesmo tempo, sempre atual.
 
-Tradicionalmente, esse trabalho fica a cargo do otimizador do próprio Sistema Gerenciador de Banco de Dados (SGBD), que escolhe um plano de execução com base em estimativas de custo e de cardinalidade. Acontece que essas estimativas nem sempre acertam, sobretudo quando há correlações complexas entre os dados ou quando a consulta foi escrita de forma pouco eficiente. Nesses casos, reescrever a consulta -- mantendo o mesmo resultado, mas mudando a forma como ela é expressa -- costuma render ganhos que o otimizador sozinho não alcança.
+Tradicionalmente, esse trabalho fica a cargo do otimizador do próprio Sistema Gerenciador de Banco de Dados (SGBD), que escolhe um plano de execução com base em estimativas de custo e de cardinalidade. Ocorre que essas estimativas nem sempre são precisas, sobretudo quando há correlações complexas entre os dados ou quando a consulta foi escrita de forma pouco eficiente. Nesses casos, reescrever a consulta mantendo o mesmo resultado, mas mudando a forma como ela é expressa costuma render ganhos que o otimizador sozinho não alcança.
 
-É nesse ponto que os Modelos de Linguagem de Grande Escala (LLMs) entram em cena. Trabalhos recentes mostram que esses modelos conseguem sugerir reescritas de consultas com bons resultados \cite{li2024llmr2,sun2025rbot}, mas também trazem um problema conhecido: a geração livre pode produzir consultas que parecem corretas e não são, seja por alucinação, seja por desvio semântico. Em um ambiente de produção, uma reescrita que retorna dados diferentes do esperado é um risco que não dá para correr.
+É nesse ponto que os Modelos de Linguagem de Grande Escala (LLMs) ganham relevância. Trabalhos recentes mostram que esses modelos conseguem sugerir reescritas de consultas com bons resultados \cite{li2024llmr2,sun2025rbot}, mas também trazem um problema conhecido: a geração livre pode produzir consultas que parecem corretas e não são, seja por alucinação, seja por desvio semântico. Em um ambiente de produção, uma reescrita que retorna dados diferentes do esperado representa um risco inaceitável.
 
-A justificativa deste trabalho parte justamente dessa tensão. Um LLM pode ampliar o espaço de otimização para além das regras fixas, mas só é útil de verdade se houver alguma forma de garantir que a consulta reescrita continua equivalente à original e que ela é, de fato, mais rápida. Em vez de confiar cegamente no modelo, a proposta aqui é deixá-lo sugerir e usar o próprio banco de dados como juiz.
+A justificativa deste trabalho parte justamente dessa tensão. Um LLM pode ampliar o espaço de otimização para além das regras fixas, mas só é útil de verdade se houver alguma forma de garantir que a consulta reescrita continua equivalente à original e que ela é, de fato, mais rápida. Em vez de confiar incondicionalmente no modelo, a proposta é deixá-lo sugerir e utilizar o próprio banco de dados como instância de validação.
 
 Disso decorre o problema de pesquisa que orienta o estudo: é possível reescrever consultas SQL com o auxílio de LLMs de modo a melhorar o desempenho sem comprometer a corretude dos resultados?
 
@@ -112,19 +112,17 @@ Como objetivos específicos, o trabalho se propõe a:
     \item levantar, na literatura, as principais técnicas de otimização e de reescrita de consultas baseadas em aprendizado de máquina e em modelos de linguagem;
     \item projetar uma arquitetura não invasiva, capaz de intermediar a comunicação entre a consulta original, o LLM e o banco de dados;
     \item implementar um processo de validação que combine verificação sintática, comparação semântica de resultados e análise dos planos de execução;
-    \item comparar o desempenho das consultas em três cenários -- sem reescrita, com reescrita sem validação e com reescrita validada;
+    \item comparar o desempenho das consultas em três cenários sem reescrita, com reescrita sem validação e com reescrita validada;
     \item avaliar a viabilidade da abordagem para uso em ambientes reais, considerando os ganhos de desempenho e a preservação da semântica.
 \end{itemize}
 
 \section{Referencial Teórico}
 
-Este capítulo reúne os conceitos e os trabalhos que sustentam a proposta. A discussão começa pela evolução da otimização de consultas e pela entrada do aprendizado de máquina nesse processo; em seguida, trata da reescrita de consultas com modelos de linguagem, da estimativa de cardinalidade e das arquiteturas que combinam recuperação de conhecimento e agentes. Ao final, uma síntese crítica organiza o que a literatura já consolidou e aponta os desafios que permanecem em aberto.
-
 \subsection{Evolução da Otimização de Consultas e Uso de Inteligência Artificial}
 
 Durante décadas, a otimização de consultas em bancos de dados se apoiou sobre três pilares: a estimação de cardinalidade, o modelo de custo e a enumeração de planos. A qualidade do plano escolhido depende, em boa parte, de quão bem o otimizador prevê o volume de dados intermediários e de quão coerente é a função de custo em relação aos recursos disponíveis na máquina.
 
-Esse arranjo dá conta de muitos casos, mas revela limitações importantes em cenários mais exigentes -- sobretudo quando existem correlações complexas entre atributos ou quando a carga de trabalho varia com frequência. Nessas situações, um erro de estimação pode levar o otimizador a escolher um plano físico inadequado, com perda direta de desempenho \cite{marcus2019neo,marcus2021bao}.
+Esse arranjo atende a muitos casos, mas revela limitações importantes em cenários mais exigentes, sobretudo quando existem correlações complexas entre atributos ou quando a carga de trabalho varia com frequência. Nessas situações, um erro de estimação pode levar o otimizador a escolher um plano físico inadequado, com perda direta de desempenho \cite{marcus2019neo,marcus2021bao}.
 
 Foi diante desse tipo de limitação que ganhou força o paradigma de \textit{Learned Query Optimization} (LQO), que traz o aprendizado de máquina para dentro do próprio processo de otimização. O \textit{Neo}, por exemplo, emprega redes neurais profundas para aprender padrões de execução a partir de consultas reais e se adaptar ao comportamento dos dados \cite{marcus2019neo}. O \textit{Bao}, por sua vez, adota uma abordagem híbrida baseada em aprendizado por reforço, oferecendo sugestões de execução consulta a consulta e melhorando o desempenho em ambientes reais \cite{marcus2021bao}.
 
@@ -134,7 +132,7 @@ Reescrever uma consulta SQL significa transformá-la em outra que produza exatam
 
 O \textit{LLM-R2} recorre a modelos de linguagem para sugerir regras de reescrita e usa aprendizado contrastivo para refinar a forma como as consultas são representadas \cite{li2024llmr2}. O \textit{R-Bot} segue uma linha parecida, mas apoia o modelo na recuperação de evidências estruturais e semânticas, reduzindo os erros ao longo do processo \cite{sun2025rbot}.
 
-Há ainda propostas que exploram a coordenação entre vários componentes. O \textit{QUITE} organiza múltiplos agentes em um fluxo controlado e testa estratégias de reescrita a partir do retorno do próprio banco de dados \cite{song2025quite}. O \textit{LITHE} acrescenta a esse cenário verificações de correção semântica fundamentadas em análise lógica e estatística \cite{dharwada2026lithe}.
+Há ainda propostas que vão além das regras fixas. O \textit{QUITE} organiza múltiplos agentes em um fluxo controlado e testa estratégias de reescrita a partir do retorno do próprio banco de dados \cite{song2025quite}. Já o \textit{LITHE} atua diretamente no espaço da consulta (\textit{SQL-to-SQL}): orienta a busca por reescritas a partir das probabilidades de \textit{tokens} do modelo e confirma a equivalência por meio de verificações de correção semântica fundamentadas em análise lógica e estatística \cite{dharwada2026lithe}.
 
 \subsection{Estimativa de Cardinalidade e Modelos Aprendidos}
 
@@ -156,14 +154,14 @@ Em conjunto, esses sistemas sugerem que apoiar o modelo em conhecimento externo 
 
 A literatura recente aponta para dois caminhos principais. O primeiro leva o aprendizado de máquina para dentro do otimizador, como fazem o \textit{Neo}, o \textit{Bao}, o \textit{NeuroCard} e o \textit{FLAT} \cite{marcus2019neo,marcus2021bao,yang2021neurocard,zhu2021flat}.
 
-O segundo mantém o otimizador intacto e atua de fora, reescrevendo as consultas com o apoio de modelos de linguagem -- é o caso do \textit{LLM-R2}, do \textit{R-Bot}, do \textit{QUITE} e do \textit{LITHE} \cite{li2024llmr2,sun2025rbot,song2025quite,dharwada2026lithe}.
+O segundo mantém o otimizador intacto e atua de fora, reescrevendo as consultas com o apoio de modelos de linguagem, como é o caso do \textit{LLM-R2}, do \textit{R-Bot}, do \textit{QUITE} e do \textit{LITHE} \cite{li2024llmr2,sun2025rbot,song2025quite,dharwada2026lithe}.
 
 Independentemente do caminho, os desafios em aberto se repetem: garantir a correção semântica, controlar a latência dos modelos e integrar tudo isso a sistemas que já estão em produção. É nesse encontro entre aprendizado de máquina, reescrita de consultas e recuperação de conhecimento que parece estar o terreno mais promissor para os próximos avanços.
 
 
 \section{Trabalhos Relacionados}
 
-Esta seção reúne os principais estudos que aplicam Inteligência Artificial -- em especial LLMs e modelos aprendidos -- à reescrita e à otimização de consultas SQL. Ao final, destaca-se em que a proposta deste trabalho se diferencia deles.
+Esta seção reúne os principais estudos que aplicam Inteligência Artificial, em especial LLMs e modelos aprendidos, à reescrita e à otimização de consultas SQL. Ao final, destaca-se em que a proposta deste trabalho se diferencia deles.
 
 \begin{itemize}
 
@@ -173,7 +171,7 @@ Os autores investigam até que ponto o ChatGPT é capaz de reescrever consultas 
 
 \item \textbf{LLM-R2: A Large Language Model Enhanced Rule-based Rewrite System} \cite{li2024llmr2}
 
-O LLM-R2 usa LLMs para sugerir sequências de regras de reescrita voltadas a plataformas como o Apache Calcite. Seu principal trunfo é um modelo contrastivo, treinado por currículo, que seleciona demonstrações (\textit{few-shot}) estruturalmente parecidas com a consulta de entrada. Como a execução final das regras fica a cargo do próprio motor do banco, o sistema garante que a reescrita seja executável e semanticamente equivalente -- algo que abordagens de geração livre, mais sujeitas a alucinações, nem sempre conseguem.
+O LLM-R2 usa LLMs para sugerir sequências de regras de reescrita voltadas a plataformas como o Apache Calcite. Seu principal trunfo é um modelo contrastivo, treinado por currículo, que seleciona demonstrações (\textit{few-shot}) estruturalmente parecidas com a consulta de entrada. Como a execução final das regras fica a cargo do próprio motor do banco, o sistema garante que a reescrita seja executável e semanticamente equivalente, algo que abordagens de geração livre, mais sujeitas a alucinações, nem sempre conseguem.
 
 \item \textbf{R-Bot: An LLM-based Query Rewrite System} \cite{sun2025rbot}
 
@@ -181,15 +179,15 @@ O R-Bot busca reduzir alucinações apoiando-se em uma arquitetura de \textit{Re
 
 \item \textbf{LITHE: A Query Rewrite Advisor using LLMs} \cite{dharwada2026lithe}
 
-O LITHE trabalha diretamente no espaço da consulta (\textit{SQL-to-SQL}), e não no espaço do plano físico. Ele aplica regras sensíveis ao banco -- apoiadas em seletividade e metadados -- e as combina com uma busca em árvore de Monte Carlo (\textit{Monte Carlo Tree Search} -- MCTS) guiada pelas probabilidades de \textit{tokens} do LLM. Quando a confiança do modelo é baixa, essa estratégia abre espaço para explorar vários caminhos de reescrita, alcançando ganhos expressivos em relação aos otimizadores nativos.
+O LITHE trabalha diretamente no espaço da consulta (\textit{SQL-to-SQL}), e não no espaço do plano físico. Ele aplica regras sensíveis ao banco, apoiadas em seletividade e metadados, e as combina com uma busca em árvore de Monte Carlo (\textit{Monte Carlo Tree Search}, MCTS) guiada pelas probabilidades de \textit{tokens} do LLM. Quando a confiança do modelo é baixa, essa estratégia abre espaço para explorar vários caminhos de reescrita, alcançando ganhos expressivos em relação aos otimizadores nativos.
 
 \item \textbf{QUITE: A Query Rewrite System Beyond Rules with LLM Agents} \cite{song2025quite}
 
-O QUITE é um \textit{framework} de múltiplos agentes coordenados por uma Máquina de Estados Finita (\textit{Finite State Machine} -- FSM). Ele recebe \textit{feedback} em tempo real do banco por meio de comandos \texttt{EXPLAIN} e injeta \textit{hints} para garantir que o plano otimizado seja de fato seguido na execução. Por não depender apenas de regras fixas, consegue encontrar otimizações que transformações pré-definidas não alcançariam.
+O QUITE é um \textit{framework} de múltiplos agentes coordenados por uma Máquina de Estados Finita (\textit{Finite State Machine}, FSM). Ele recebe \textit{feedback} em tempo real do banco por meio de comandos \texttt{EXPLAIN} e injeta \textit{hints} para garantir que o plano otimizado seja de fato seguido na execução. Por não depender apenas de regras fixas, consegue encontrar otimizações que transformações pré-definidas não alcançariam.
 
 \end{itemize}
 
-Diferentemente das abordagens de otimização interna -- como o Neo e o Bao, que substituem ou modificam partes do otimizador do SGBD -- e dos sistemas presos a regras fixas ou voltados apenas a reduzir latência, este trabalho propõe uma reescrita \textit{SQL-to-SQL} baseada em LLMs, com validação e análise conduzidas pelo próprio gerenciador de banco de dados.
+Diferentemente das abordagens de otimização interna, como o Neo e o Bao, que substituem ou modificam partes do otimizador do SGBD, e dos sistemas presos a regras fixas ou voltados apenas a reduzir latência, este trabalho propõe uma reescrita \textit{SQL-to-SQL} baseada em LLMs, com validação e análise conduzidas pelo próprio gerenciador de banco de dados.
 
 A proposta se diferencia por buscar um equilíbrio entre desempenho e preservação semântica. A geração livre oferece mais liberdade de transformação, mas convive com \textit{semantic drift}, alucinações e regressões de desempenho; os sistemas rígidos, por outro lado, ficam limitados às transformações que alguém previu e codificou de antemão. A ideia aqui é colocar o LLM como agente de reescrita semântica em uma camada externa e não invasiva, enquanto o SGBD assume o papel de validar e fornecer evidências técnicas.
 
@@ -199,9 +197,9 @@ O ciclo, então, se fecha assim: o LLM propõe a transformação, o otimizador d
 
 \section{Materiais e Métodos}
 
-Este trabalho se caracteriza como uma pesquisa aplicada, de abordagem quantitativa e natureza experimental. É aplicada porque parte de um problema concreto -- a otimização de consultas SQL em bancos de dados; é quantitativa porque recorre a métricas objetivas de desempenho para avaliar os resultados; e é experimental porque envolve a construção de um protótipo funcional e a realização de testes controlados em ambiente computacional.
+Este trabalho se caracteriza como uma pesquisa aplicada, de abordagem quantitativa e natureza experimental. É aplicada porque parte de um problema concreto, a otimização de consultas SQL em bancos de dados; é quantitativa porque recorre a métricas objetivas de desempenho para avaliar os resultados; e é experimental porque envolve a construção de um protótipo funcional e a realização de testes controlados em ambiente computacional.
 
-A proposta é desenvolver um mecanismo de reescrita de consultas SQL baseado em Modelos de Linguagem de Grande Escala (\textit{Large Language Models} -- LLMs), acompanhado de etapas de validação sintática e semântica e de uma análise de desempenho apoiada no \textit{feedback} do próprio otimizador. Em essência, a pergunta que orienta o estudo é direta: consultas reescritas automaticamente conseguem rodar mais rápido sem comprometer a corretude dos resultados?
+A proposta é desenvolver um mecanismo de reescrita de consultas SQL baseado em Modelos de Linguagem de Grande Escala (\textit{Large Language Models}, LLMs), acompanhado de etapas de validação sintática e semântica e de uma análise de desempenho apoiada no \textit{feedback} do próprio otimizador. Em essência, a pergunta que orienta o estudo é direta: consultas reescritas automaticamente conseguem rodar mais rápido sem comprometer a corretude dos resultados?
 
 \subsection{Arquitetura da Solução Proposta}
 
@@ -209,15 +207,15 @@ A arquitetura proposta funciona como uma camada intermediária, encarregada de r
 
 O fluxo começa com uma consulta SQL original submetida ao sistema. Ela é então enviada ao LLM, que recebe instruções específicas para devolver uma versão semanticamente equivalente e, idealmente, mais eficiente. Gerada a nova consulta, entram em cena as etapas de validação, responsáveis por verificar tanto a corretude quanto o impacto sobre o desempenho.
 
-Vale destacar que a solução foi pensada para ser não invasiva: ela não exige nenhuma alteração no núcleo do Sistema Gerenciador de Banco de Dados (SGBD) e pode ser acoplada como complemento aos otimizadores que já existem.
+Cabe destacar que a solução foi concebida para ser não invasiva: ela não exige nenhuma alteração no núcleo do Sistema Gerenciador de Banco de Dados (SGBD) e pode ser acoplada como complemento aos otimizadores que já existem.
 
 \subsection{Processo de Reescrita de Consultas}
 
-Tudo começa quando uma consulta SQL é submetida ao sistema. Essa consulta original serve de entrada para o modelo de linguagem, que recebe um conjunto de instruções voltadas a melhorar a estrutura lógica da consulta.
+O processo se inicia com a submissão de uma consulta SQL ao sistema. Essa consulta original serve de entrada para o modelo de linguagem, que recebe um conjunto de instruções voltadas a melhorar a estrutura lógica da consulta.
 
-Entre as transformações esperadas estão a troca de subconsultas por junções, o uso de Common Table Expressions (CTEs), a simplificação de predicados, a reorganização de filtros e a eliminação de operações redundantes -- estratégias que a literatura já associa à redução de custos de execução e ao melhor aproveitamento dos recursos computacionais.
+Entre as transformações esperadas estão a troca de subconsultas por junções, o uso de Common Table Expressions (CTEs), a simplificação de predicados, a reorganização de filtros e a eliminação de operações redundantes, estratégias que a literatura já associa à redução de custos de execução e ao melhor aproveitamento dos recursos computacionais.
 
-Convém reforçar que o modelo não tem autonomia para trocar a consulta original por conta própria. Toda reescrita precisa passar pelas etapas de validação definidas neste trabalho antes de ser aceita como alternativa válida.
+Cabe reforçar que o modelo não tem autonomia para substituir a consulta original por conta própria. Toda reescrita precisa passar pelas etapas de validação definidas neste trabalho antes de ser aceita como alternativa válida.
 
 \subsection{Validação das Consultas Reescritas}
 
@@ -273,93 +271,6 @@ Comparar os três cenários permite enxergar não só o potencial de otimizaçã
 A análise se baseará em métricas objetivas de desempenho: o tempo total de execução, o custo estimado do plano, a quantidade de linhas processadas, a taxa de sucesso das reescritas, o percentual de consultas efetivamente otimizadas e o número de reescritas rejeitadas ao longo da validação.
 
 Esses números serão comparados estatisticamente entre os cenários, o que deve indicar se a abordagem proposta é eficaz e se faz sentido aplicá-la em ambientes reais.
-
-
-\section{Resultados e Discussão}
-Essa seção deverá ser escrita na segunda parte do trabalho, conhecida como TCC2, e deverá conter os resultados dos experimentos realizados, discussão comparando os resultados obtidos com outros encontrados em trabalhos similares, além de um parágrafo apontando as limitações da metodologia adotada.
-
- % Figura
-    % https://pt.overleaf.com/learn/latex/Inserting_Images
-    \begin{figure}[h!] % h! pede para o compilador tentar incluir a figura na posição em que foi declarada;
-        \centering
-        \includegraphics[width=0.4\textwidth]{fig1.jpg} % altere a width (intervalo entre 0.0 e 1), caso a imagem não fique na posição correta
-        \caption{Exemplo de uso de figura}
-        \label{fig:figura1}
-    \end{figure}
-
-    % Figuras (usando subfigure)
-    % https://latex-tutorial.com/subfigure-latex/
-    \begin{figure}[h!] % h! pede para o compilador tentar incluir a figura na posição em que foi declarada;
-        \centering
-        \caption{Exemplo com sub-figuras}
-        \begin{subfigure}{0.4\textwidth}
-            \includegraphics[width=\textwidth]{fig1.jpg}
-            \caption{Sub-figura 1}
-            \label{fig:sub_fig1}
-        \end{subfigure}
-        \hspace{1em}
-        \begin{subfigure}{0.4\textwidth}
-            \includegraphics[width=\textwidth]{fig1.jpg}
-            \caption{Sub-figura 2}
-            \label{fig:sub_fig2}
-        \end{subfigure}
-        \label{fig:figura2}
-    \end{figure}
-    
-    % Tabelas
-    % Editor online: https://www.latex-tables.com
-    % Referência: https://ctan.math.illinois.edu/macros/latex/contrib/tabularray/tabularray.pdf
-     \begin{table}[H] % h! pede para o compilador tentar incluir a tabela na posição em que foi declarada;
-        \centering
-        \caption{Minha tabela}
-        \label{tab:tabela1}
-        \begin{tblr}{
-          colspec = {X[l] X[l]}, % Tipo X define células com quebra automática de linha. Use: l=left, r=right, c=center ou j=justify para alinhamento dentro das células
-          width = \linewidth,
-          hlines, % inclui borda horizontal
-          vlines, % inclui borda vertical        
-        }
-        \textbf{cabeçalho 1} & \textbf{cabeçalho 2} \\
-        {texto à esquerda} & {Existem muitas variações das passagens do Lorem Ipsum disponíveis, mas a maior parte sofreu alterações de alguma forma.}
-        \end{tblr}        
-    \end{table}
-
-    % tabela com subtabelas
-    \begin{table}[H]
-        \centering
-        \caption{Tabela com sub-tabelas}
-        \label{tab:tabela2}
-        \begin{subtable}{0.45\linewidth} %subtabela
-            \centering            
-            \begin{tblr}{
-              colspec = {X[l] X[l]}, % Tipo X define células com quebra automática de linha. Use: l=left, r=right, c=center ou j=justify para alinhamento dentro das células
-              width = \linewidth,
-              hlines, % inclui borda horizontal
-              vlines, % inclui borda vertical        
-            }
-            \textbf{cabeçalho 1} & \textbf{cabeçalho 2} \\
-            {Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old.} & {The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested.}
-            \end{tblr}
-            \caption{Sub-tabela da esquerda}
-        \end{subtable}
-        \hfill
-        \begin{subtable}{0.45\linewidth} %subtabela
-            \centering            
-            \begin{tblr}{
-                  colspec = {X[l] X[l]}, % Tipo X define células com quebra automática de linha. Use: l=left, r=right, c=center ou j=justify para alinhamento dentro das células
-                  width = \linewidth,
-                  hlines, % inclui borda horizontal
-                  vlines, % inclui borda vertical        
-                }
-                \textbf{cabeçalho 1} & \textbf{cabeçalho 2} \\
-                {Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old.} & {The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested.}
-            \end{tblr}
-            \caption{Sub-tabela da direita}
-        \end{subtable}
-    \end{table}
-
-\section{Considerações Finais}
-Essa seção deverá ser escrita na segunda parte do trabalho, conhecida como TCC2.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Seção de Referências (gerada automaticamente)
