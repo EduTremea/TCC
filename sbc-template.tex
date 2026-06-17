@@ -96,7 +96,7 @@ Passo Fundo -- RS -- Brasil
 
 Bancos de dados relacionais estão por trás de boa parte dos sistemas que usamos todos os dias, de aplicações corporativas a plataformas de análise. À medida que esses sistemas crescem e as consultas ficam mais complexas, o tempo que cada consulta leva para ser executada deixa de ser um detalhe e passa a ter impacto direto no custo de infraestrutura e na experiência de quem depende daquela informação. Por isso, otimizar consultas SQL é um problema antigo e, ao mesmo tempo, sempre atual.
 
-Tradicionalmente, esse trabalho fica a cargo do otimizador do próprio Sistema Gerenciador de Banco de Dados (SGBD), que escolhe um plano de execução com base em estimativas de custo e de cardinalidade. Ocorre que essas estimativas nem sempre são precisas, sobretudo quando há correlações complexas entre os dados ou quando a consulta foi escrita de forma pouco eficiente. Nesses casos, reescrever a consulta mantendo o mesmo resultado, mas mudando a forma como ela é expressa costuma render ganhos que o otimizador sozinho não alcança.
+Tradicionalmente, esse trabalho fica a cargo do otimizador do próprio Sistema Gerenciador de Banco de Dados (SGBD), que escolhe um plano de execução com base em estimativas de custo e de cardinalidade. Ocorre que essas estimativas nem sempre são precisas, sobretudo quando há correlações complexas entre os dados ou quando a consulta foi escrita de forma pouco eficiente. Nesses casos, reescrever uma consulta mantendo o mesmo resultado, mas mudando como ela é expressa costuma render ganhos que o otimizador sozinho não alcança.
 
 É nesse ponto que os Modelos de Linguagem de Grande Escala (LLMs) ganham relevância. Trabalhos recentes mostram que esses modelos conseguem sugerir reescritas de consultas com bons resultados \cite{li2024llmr2,sun2025rbot}, mas também trazem um problema conhecido: a geração livre pode produzir consultas que parecem corretas e não são, seja por alucinação, seja por desvio semântico. Em um ambiente de produção, uma reescrita que retorna dados diferentes do esperado representa um risco inaceitável.
 
@@ -213,7 +213,7 @@ Cabe destacar que a solução foi concebida para ser não invasiva: ela não exi
 
 O processo se inicia com a submissão de uma consulta SQL ao sistema. Essa consulta original serve de entrada para o modelo de linguagem, que recebe um conjunto de instruções voltadas a melhorar a estrutura lógica da consulta.
 
-Entre as transformações esperadas estão a troca de subconsultas por junções, o uso de Common Table Expressions (CTEs), a simplificação de predicados, a reorganização de filtros e a eliminação de operações redundantes, estratégias que a literatura já associa à redução de custos de execução e ao melhor aproveitamento dos recursos computacionais.
+Entre as transformações esperadas estão a troca de subconsultas por junções, o uso de \textit{Common Table Expressions} (CTEs), a simplificação de predicados, a reorganização de filtros e a eliminação de operações redundantes, estratégias que a literatura já associa à redução de custos de execução e ao melhor aproveitamento dos recursos computacionais.
 
 Cabe reforçar que o modelo não tem autonomia para substituir a consulta original por conta própria. Toda reescrita precisa passar pelas etapas de validação definidas neste trabalho antes de ser aceita como alternativa válida.
 
@@ -231,18 +231,9 @@ Por último, a validação de desempenho se apoia nas informações do otimizado
 
 Os experimentos serão conduzidos no PostgreSQL, escolhido tanto por sua presença consolidada em ambientes acadêmicos e corporativos quanto pelas ferramentas nativas de análise de desempenho que oferece.
 
-O protótipo será escrito em Python, linguagem que se integra com facilidade a bancos relacionais e a plataformas de Inteligência Artificial. Entre as tecnologias previstas estão:
+O protótipo será escrito em Python, linguagem que se integra com facilidade a bancos relacionais e a plataformas de Inteligência Artificial. Ainda, entre as bibliotecas Python necessárias, estão: SQLAlchemy, Psycopg, Pandas e Matplotlib.
 
-\begin{itemize}
-    \item PostgreSQL;
-    \item Python;
-    \item SQLAlchemy;
-    \item Psycopg;
-    \item Pandas;
-    \item Matplotlib.
-\end{itemize}
-
-O SQLAlchemy cuidará das conexões e da execução das consultas SQL, enquanto o Psycopg atuará como driver de comunicação com o PostgreSQL. Já o Pandas será usado para manipular e comparar os resultados retornados pelas consultas, e o Matplotlib, para gerar os gráficos e apoiar as análises estatísticas.
+O SQLAlchemy permite a definição e execução de consultas SQL, enquanto o Psycopg atuará como driver de comunicação com o PostgreSQL. Já o Pandas será usado para manipular e comparar os resultados retornados pelas consultas e, por fim, Matplotlib para gerar os gráficos e apoiar as análises estatísticas.
 
 \subsection{Modelo de Linguagem Utilizado}
 
@@ -252,19 +243,13 @@ A depender da disponibilidade de acesso e dos recursos computacionais ao longo d
 
 \subsection{Conjunto de Dados}
 
-A avaliação utilizará bases consagradas na literatura de otimização de consultas e desempenho de bancos de dados. Entre as consideradas estão o TPC-H, o TPC-DS e o Join Order Benchmark (JOB), montado a partir da base IMDb. Esses benchmarks reúnem consultas analíticas de diferentes níveis de complexidade, com múltiplas junções, agregações e operações de filtragem. Trabalhar com eles ajuda tanto a comparar os resultados com os de trabalhos relacionados quanto a garantir maior reprodutibilidade dos experimentos.
+A avaliação utilizará bases consagradas na literatura de otimização de consultas e desempenho de bancos de dados. Entre as consideradas estão o TPC-H, o TPC-DS e o \textit{Join Order Benchmark} (JOB), montado a partir da base IMDb. Esses benchmarks reúnem consultas analíticas de diferentes níveis de complexidade, com múltiplas junções, agregações e operações de filtragem. Trabalhar com eles ajuda tanto a comparar os resultados com os de trabalhos relacionados quanto a garantir maior reprodutibilidade dos experimentos.
 
 \subsection{Cenários de Avaliação}
 
-A avaliação será feita em três cenários distintos.
+A avaliação será feita com três cenários distintos. No primeiro, as consultas rodam sem nenhuma alteração, apenas com o otimizador nativo do PostgreSQL. No segundo, passam pela reescrita do modelo de linguagem antes de serem executadas, mas sem nenhum mecanismo adicional de validação. No terceiro, as consultas reescritas percorrem todo o processo de validação proposto aqui, com as verificações sintática, semântica e de plano de execução.
 
-No primeiro, as consultas rodam sem nenhuma alteração, apenas com o otimizador nativo do PostgreSQL.
-
-No segundo, passam pela reescrita do modelo de linguagem antes de serem executadas, mas sem nenhum mecanismo adicional de validação.
-
-No terceiro, as consultas reescritas percorrem todo o processo de validação proposto aqui, com as verificações sintática, semântica e de plano de execução.
-
-Comparar os três cenários permite enxergar não só o potencial de otimização dos LLMs, mas também o quanto os mecanismos de validação ajudam a evitar regressões de desempenho e erros semânticos.
+Comparar três cenários permite enxergar não só o potencial de otimização dos LLMs, mas também o quanto os mecanismos de validação ajudam a evitar regressões de desempenho e erros semânticos.
 
 \subsection{Métricas de Avaliação}
 

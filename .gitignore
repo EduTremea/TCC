@@ -1,66 +1,53 @@
-# =========================
-# Arquivos auxiliares LaTeX
-# =========================
+# ==========================================================
+# .gitignore para projeto LaTeX (TCC) — latexmk + biblatex/biber
+# ==========================================================
+
+## Arquivos auxiliares do LaTeX/pdfLaTeX
 *.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fot
+*.cb
+*.cb2
+
+## Documentos intermediários
+*.dvi
+*.xdv
+*-converted-to.*
+
+## Bibliografia (bibtex / biblatex / biber)
 *.bbl
 *.bcf
 *.blg
-*.fdb_latexmk
-*.fls
-*.idx
-*.ilg
-*.ind
-*.lof
-*.log
-*.lot
-*.out
+*-blx.aux
+*-blx.bib
 *.run.xml
+
+## Ferramentas de build (latexmk / SyncTeX)
+*.fdb_latexmk
+*.synctex
 *.synctex.gz
-*.toc
-*.acn
-*.acr
-*.alg
-*.glg
-*.glo
-*.gls
-*.ist
+*.synctex(busy)
+*.synctex.gz(busy)
+*.pdfsync
+
+## Beamer / outros auxiliares ocasionais
 *.nav
 *.snm
 *.vrb
-*.xdv
 
-# =========================
-# Latexmk / cache
-# =========================
-_latexmk/
-*.latexmk
+## Saída compilada
+# Por padrão, o PDF final NÃO é versionado (mantém o diff limpo).
+# Se preferir manter o PDF compilado no repositório, apague a linha abaixo.
+/sbc-template.pdf
 
-# =========================
-# Arquivos do sistema
-# =========================
+## Editor / Sistema Operacional
 .DS_Store
 Thumbs.db
-
-# =========================
-# VSCode / IDE
-# =========================
+*~
 .vscode/
 .idea/
-
-# =========================
-# Python (caso use scripts)
-# =========================
-__pycache__/
-*.pyc
-*.pyo
-
-# =========================
-# MANTER versionado
-# =========================
-!*.tex
-!*.bib
-!*.pdf
-!*.png
-!*.jpg
-!*.jpeg
-!*.svg
