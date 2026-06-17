@@ -98,11 +98,11 @@ Bancos de dados relacionais estão por trás de boa parte dos sistemas que usamo
 
 Tradicionalmente, esse trabalho fica a cargo do otimizador do próprio Sistema Gerenciador de Banco de Dados (SGBD), que escolhe um plano de execução com base em estimativas de custo e de cardinalidade. Ocorre que essas estimativas nem sempre são precisas, sobretudo quando há correlações complexas entre os dados ou quando a consulta foi escrita de forma pouco eficiente. Nesses casos, reescrever uma consulta mantendo o mesmo resultado, mas mudando como ela é expressa costuma render ganhos que o otimizador sozinho não alcança.
 
-É nesse ponto que os Modelos de Linguagem de Grande Escala (LLMs) ganham relevância. Trabalhos recentes mostram que esses modelos conseguem sugerir reescritas de consultas com bons resultados \cite{li2024llmr2,sun2025rbot}, mas também trazem um problema conhecido: a geração livre pode produzir consultas que parecem corretas e não são, seja por alucinação, seja por desvio semântico. Em um ambiente de produção, uma reescrita que retorna dados diferentes do esperado representa um risco inaceitável.
+Os Modelos de Linguagem de Grande Escala (LLMs) tornam-se relevantes justamente nesse ponto. Trabalhos recentes mostram que esses modelos conseguem sugerir reescritas de consultas com bons resultados \cite{li2024llmr2,sun2025rbot}, mas também trazem um problema conhecido: a geração livre pode produzir consultas que parecem corretas e não são, seja por alucinação, seja por desvio semântico. Em um ambiente de produção, uma reescrita que retorna dados diferentes do esperado representa um risco inaceitável.
 
 A justificativa deste trabalho parte justamente dessa tensão. Um LLM pode ampliar o espaço de otimização para além das regras fixas, mas só é útil de verdade se houver alguma forma de garantir que a consulta reescrita continua equivalente à original e que ela é, de fato, mais rápida. Em vez de confiar incondicionalmente no modelo, a proposta é deixá-lo sugerir e utilizar o próprio banco de dados como instância de validação.
 
-Disso decorre o problema de pesquisa que orienta o estudo: é possível reescrever consultas SQL com o auxílio de LLMs de modo a melhorar o desempenho sem comprometer a corretude dos resultados?
+Esse cenário conduz ao problema de pesquisa que orienta o estudo: é possível reescrever consultas SQL com o auxílio de LLMs de modo a melhorar o desempenho sem comprometer a corretude dos resultados?
 
 Para responder a essa pergunta, define-se como objetivo geral desenvolver e avaliar um mecanismo de reescrita de consultas SQL baseado em LLMs, apoiado por etapas de validação sintática, semântica e de desempenho conduzidas pelo próprio SGBD.
 
@@ -118,21 +118,29 @@ Como objetivos específicos, o trabalho se propõe a:
 
 \section{Referencial Teórico}
 
+O referencial que segue está organizado em cinco frentes. Começa pela evolução da otimização de consultas e pela entrada do aprendizado de máquina nesse processo; passa pela reescrita de consultas com modelos de linguagem, pela estimativa de cardinalidade e pelas arquiteturas que unem recuperação de conhecimento e agentes; e encerra com uma síntese crítica, que reúne o que a literatura já consolidou e expõe os limites teóricos, em especial o da equivalência de consultas, que recaem sobre a validação proposta neste trabalho.
+
 \subsection{Evolução da Otimização de Consultas e Uso de Inteligência Artificial}
 
 Durante décadas, a otimização de consultas em bancos de dados se apoiou sobre três pilares: a estimação de cardinalidade, o modelo de custo e a enumeração de planos. A qualidade do plano escolhido depende, em boa parte, de quão bem o otimizador prevê o volume de dados intermediários e de quão coerente é a função de custo em relação aos recursos disponíveis na máquina.
 
+Esse modelo não é novo. Ainda no fim da década de 1970, o otimizador do System R formalizou a otimização baseada em custo: estimava a seletividade dos predicados e escolhia, por programação dinâmica, a ordem de junção mais barata entre as muitas possíveis \cite{selinger1979}. Décadas depois, o otimizador continua sendo descrito pelos mesmos três blocos: um conjunto de transformações que preservam o resultado, um modelo que estima o custo de cada alternativa e um algoritmo de busca que percorre o espaço de planos \cite{chaudhuri1998}. Essa divisão importa para o presente trabalho: o LLM passa a sugerir as transformações, enquanto o SGBD segue responsável por estimar o custo e decidir.
+
 Esse arranjo atende a muitos casos, mas revela limitações importantes em cenários mais exigentes, sobretudo quando existem correlações complexas entre atributos ou quando a carga de trabalho varia com frequência. Nessas situações, um erro de estimação pode levar o otimizador a escolher um plano físico inadequado, com perda direta de desempenho \cite{marcus2019neo,marcus2021bao}.
 
-Foi diante desse tipo de limitação que ganhou força o paradigma de \textit{Learned Query Optimization} (LQO), que traz o aprendizado de máquina para dentro do próprio processo de otimização. O \textit{Neo}, por exemplo, emprega redes neurais profundas para aprender padrões de execução a partir de consultas reais e se adaptar ao comportamento dos dados \cite{marcus2019neo}. O \textit{Bao}, por sua vez, adota uma abordagem híbrida baseada em aprendizado por reforço, oferecendo sugestões de execução consulta a consulta e melhorando o desempenho em ambientes reais \cite{marcus2021bao}.
+Foi diante desse tipo de limitação que se consolidou o paradigma de \textit{Learned Query Optimization} (LQO), que traz o aprendizado de máquina para dentro do próprio processo de otimização. O \textit{Neo}, por exemplo, emprega redes neurais profundas para aprender padrões de execução a partir de consultas reais e se adaptar ao comportamento dos dados \cite{marcus2019neo}. O \textit{Bao}, por sua vez, adota uma abordagem híbrida baseada em aprendizado por reforço, oferecendo sugestões de execução consulta a consulta e melhorando o desempenho em ambientes reais \cite{marcus2021bao}.
 
 \subsection{Reescrita de Consultas SQL com Modelos de Linguagem}
 
 Reescrever uma consulta SQL significa transformá-la em outra que produza exatamente o mesmo resultado, porém de forma mais eficiente. Diferentemente do que ocorre em abordagens de \textit{Text-to-SQL}, aqui o ponto de partida já é uma consulta estruturada; o desafio está em alterá-la sem quebrar a equivalência lógica entre o que entra e o que sai.
 
+A reescrita, aliás, não nasceu com os modelos de linguagem: ela já era um recurso conhecido dos próprios SGBDs. O Starburst, por exemplo, introduziu um otimizador extensível em que regras de reescrita eram aplicadas sobre a consulta antes do planejamento físico \cite{pirahesh1992starburst}, e essa tradição segue viva em frameworks como o Apache Calcite, que reúne uma ampla biblioteca de regras de transformação testadas e reaproveitáveis \cite{begoli2018calcite}. O limite dessas abordagens é estrutural: elas só aplicam transformações que alguém previu e codificou de antemão. Os modelos de linguagem prometem ultrapassar esse teto, ao propor reescritas que não estão presas a um catálogo fixo de regras.
+
 O \textit{LLM-R2} recorre a modelos de linguagem para sugerir regras de reescrita e usa aprendizado contrastivo para refinar a forma como as consultas são representadas \cite{li2024llmr2}. O \textit{R-Bot} segue uma linha parecida, mas apoia o modelo na recuperação de evidências estruturais e semânticas, reduzindo os erros ao longo do processo \cite{sun2025rbot}.
 
-Há ainda propostas que vão além das regras fixas. O \textit{QUITE} organiza múltiplos agentes em um fluxo controlado e testa estratégias de reescrita a partir do retorno do próprio banco de dados \cite{song2025quite}. Já o \textit{LITHE} atua diretamente no espaço da consulta (\textit{SQL-to-SQL}): orienta a busca por reescritas a partir das probabilidades de \textit{tokens} do modelo e confirma a equivalência por meio de verificações de correção semântica fundamentadas em análise lógica e estatística \cite{dharwada2026lithe}.
+Há ainda propostas que vão além das regras fixas. O \textit{QUITE} organiza múltiplos agentes em um fluxo controlado e testa estratégias de reescrita a partir do retorno do próprio banco de dados \cite{song2025quite}. Já o \textit{LITHE} atua diretamente no espaço da consulta (\textit{SQL-to-SQL}): orienta a busca por reescritas a partir das probabilidades de \textit{tokens} do modelo e confirma a equivalência por meio de verificações de correção semântica fundamentadas em análise lógica e estatística \cite{dharwada2026lithe}. Em uma linha próxima, o \textit{GenRewrite} trata a reescrita de forma mais holística, indo além das regras fixas e expressando em linguagem natural as transformações que aprende \cite{liu2024genrewrite}.
+
+Essa tarefa não deve ser confundida com um problema vizinho e mais conhecido, o \textit{Text-to-SQL}, em que o modelo traduz uma pergunta em linguagem natural para uma consulta. Benchmarks como o \textit{Spider} \cite{yu2018spider} e o \textit{BIRD} \cite{li2023bird} mostram que mesmo modelos avançados ainda erram com frequência nessa tradução: no \textit{BIRD}, a acurácia de execução de modelos do estado da arte ficou bem abaixo do desempenho humano. Esse dado é relevante por dois motivos: reforça que a saída de um LLM não pode ser aceita sem verificação e evidencia que medir \textit{eficiência}, e não apenas correção, é uma preocupação legítima ao avaliar SQL gerado por modelos. De forma mais ampla, levantamentos recentes situam a reescrita de consultas dentro de um movimento maior de aplicação de LLMs a tarefas de banco de dados \cite{li2024llm4dm}, movimento que esbarra sempre no mesmo ponto sensível: a alucinação, isto é, a tendência do modelo a produzir saídas plausíveis, porém incorretas \cite{huang2023hallucination}. Isso torna necessária uma instância externa que valide cada reescrita.
 
 \subsection{Estimativa de Cardinalidade e Modelos Aprendidos}
 
@@ -140,15 +148,19 @@ A estimativa de cardinalidade costuma ser apontada como um dos fatores que mais 
 
 O \textit{NeuroCard} ataca esse problema com redes neurais autorregressivas, capazes de capturar correlações complexas entre várias tabelas sem partir do pressuposto de que os atributos são independentes \cite{yang2021neurocard}. O \textit{FLAT} segue outro caminho: combina fatoração independente e condicional em um modelo gráfico, em busca de um meio-termo entre precisão e custo computacional \cite{zhu2021flat}.
 
-Em comum, esses trabalhos mostram um avanço claro frente aos métodos tradicionais, com estimativas mais confiáveis e reflexo direto no desempenho das consultas executadas.
+Boa parte dessa agenda foi impulsionada por uma constatação empírica. Ao avaliar otimizadores sobre o \textit{Join Order Benchmark} (JOB), Leis et al. mostraram que os erros de estimativa de cardinalidade são o fator que mais degrada a qualidade dos planos, bem mais do que o modelo de custo ou o algoritmo de enumeração \cite{leis2015job}. Esse achado explica tanto por que o JOB virou referência para avaliar estimadores quanto por que ele não é o foco deste trabalho, voltado à reescrita da consulta, e não à correção das estimativas.
+
+Esses trabalhos apresentam um avanço claro frente aos métodos tradicionais, com estimativas mais confiáveis e reflexo direto no desempenho das consultas executadas.
 
 \subsection{Arquiteturas Baseadas em Recuperação e Agentes}
 
 Boa parte das propostas mais recentes combina modelos de linguagem com mecanismos de recuperação de conhecimento, formando pipelines no estilo \textit{Retrieval-Augmented Generation} (RAG). A ideia é converter as consultas em representações vetoriais e, a partir delas, recuperar evidências que ajudem a orientar a geração.
 
+Esses pipelines se apoiam em técnicas que se consolidaram no estudo dos próprios modelos de linguagem. O aprendizado em contexto, em que o modelo generaliza a partir de poucos exemplos fornecidos no próprio \textit{prompt}, mostrou que essas redes resolvem tarefas novas sem treinamento adicional \cite{brown2020fewshot}, mecanismo que, no presente trabalho, corresponde a fornecer o esquema do banco e exemplos junto da consulta. A isso somam-se estratégias de raciocínio passo a passo \cite{wei2022cot} e de autoconsistência, em que várias respostas são amostradas e a mais coerente prevalece \cite{wang2023selfconsistency}, ideia próxima, em espírito, da etapa de validação que descarta reescritas inválidas. A geração aumentada por recuperação (RAG), por fim, combina a memória interna do modelo com a busca de evidências externas, reduzindo respostas sem fundamento \cite{lewis2020rag}.
+
 O \textit{R-Bot} ilustra bem essa estratégia ao unir recuperação híbrida e geração guiada por evidências \cite{sun2025rbot}. O \textit{QUITE} chega a um resultado semelhante por outro meio, distribuindo entre diferentes agentes as tarefas de planejamento, validação e execução das reescritas, em um processo iterativo \cite{song2025quite}.
 
-Em conjunto, esses sistemas sugerem que apoiar o modelo em conhecimento externo e em validações sucessivas reduz erros e torna a solução mais robusta \cite{sun2025rbot,song2025quite,dharwada2026lithe}.
+Esses sistemas sugerem que apoiar o modelo em conhecimento externo e em validações sucessivas reduz erros e torna a solução mais robusta \cite{sun2025rbot,song2025quite,dharwada2026lithe}.
 
 \subsection{Síntese Crítica da Literatura}
 
@@ -156,7 +168,11 @@ A literatura recente aponta para dois caminhos principais. O primeiro leva o apr
 
 O segundo mantém o otimizador intacto e atua de fora, reescrevendo as consultas com o apoio de modelos de linguagem, como é o caso do \textit{LLM-R2}, do \textit{R-Bot}, do \textit{QUITE} e do \textit{LITHE} \cite{li2024llmr2,sun2025rbot,song2025quite,dharwada2026lithe}.
 
-Independentemente do caminho, os desafios em aberto se repetem: garantir a correção semântica, controlar a latência dos modelos e integrar tudo isso a sistemas que já estão em produção. É nesse encontro entre aprendizado de máquina, reescrita de consultas e recuperação de conhecimento que parece estar o terreno mais promissor para os próximos avanços.
+Há, porém, um limite teórico que nenhuma dessas linhas elimina e que recai diretamente sobre a validação proposta neste trabalho: decidir se duas consultas são equivalentes é, no caso geral, um problema indecidível, pois deriva da indecidibilidade da lógica de primeira ordem sobre instâncias finitas \cite{ahv1995}. Mesmo quando o problema se restringe às consultas conjuntivas, decidir contenção e equivalência continua sendo NP-completo \cite{chandra1977}. Por isso, as ferramentas que provam equivalência de forma automática cobrem apenas fragmentos do SQL: o \textit{Cosette} decide a equivalência para uma classe de consultas, mas não trata recursos como valores nulos e diferença de conjuntos \cite{cosette2017}; o \textit{EQUITAS} traduz consultas para fórmulas lógicas e as submete a um resolvedor SMT \cite{equitas2019}; o \textit{SPES} leva essa ideia para a semântica de multiconjunto, mais fiel ao SQL real \cite{spes2022}; e o \textit{VeriEQL}, embora suporte uma linguagem mais ampla, realiza verificação limitada, restrita a domínios finitos \cite{verieql2024}.
+
+Esse panorama tem uma consequência prática para a metodologia adotada aqui. Como não há como provar, de forma geral e eficiente, que a consulta reescrita é equivalente à original, a validação semântica deste trabalho recorre à comparação dos resultados produzidos sobre um conjunto concreto de dados. É uma aproximação pragmática, não uma garantia formal: resultados diferentes refutam a equivalência, mas resultados iguais sobre uma instância não a comprovam em definitivo. Essa limitação é assumida de forma explícita e está alinhada à prática dos próprios sistemas de reescrita por LLM, que também validam suas transformações por execução.
+
+Independentemente do caminho, os desafios em aberto se repetem: garantir a correção semântica, controlar a latência dos modelos e integrar tudo isso a sistemas que já estão em produção. O encontro entre aprendizado de máquina, reescrita de consultas e recuperação de conhecimento parece concentrar o terreno mais promissor para os próximos avanços.
 
 
 \section{Trabalhos Relacionados}
@@ -193,7 +209,7 @@ A proposta se diferencia por buscar um equilíbrio entre desempenho e preservaç
 
 A verificação acontece em etapas. Primeiro, a consulta reescrita passa pelo \textit{parser} do banco, que confere sua validade sintática. Em seguida, comandos como \texttt{EXPLAIN} e \texttt{EXPLAIN ANALYZE} permitem analisar o plano de execução e comparar o custo estimado entre a versão original e a reescrita. Por fim, comparam-se os resultados das duas consultas para confirmar que a transformação não alterou a semântica original.
 
-O ciclo, então, se fecha assim: o LLM propõe a transformação, o otimizador do SGBD aponta os ganhos de desempenho e os mecanismos de validação asseguram que a reescrita está correta. A meta é chegar a uma solução prática, explicável e compatível com diferentes SGBDs relacionais, confiável o bastante para uso corporativo e ambientes de produção.
+O ciclo completo funciona assim: o LLM propõe a transformação, o otimizador do SGBD aponta os ganhos de desempenho e os mecanismos de validação asseguram que a reescrita está correta. A meta é chegar a uma solução prática, explicável e compatível com diferentes SGBDs relacionais, confiável o bastante para uso corporativo e ambientes de produção.
 
 \section{Materiais e Métodos}
 
@@ -207,7 +223,7 @@ A arquitetura proposta funciona como uma camada intermediária, encarregada de r
 
 O fluxo começa com uma consulta SQL original submetida ao sistema. Ela é então enviada ao LLM, que recebe instruções específicas para devolver uma versão semanticamente equivalente e, idealmente, mais eficiente. Gerada a nova consulta, entram em cena as etapas de validação, responsáveis por verificar tanto a corretude quanto o impacto sobre o desempenho.
 
-Cabe destacar que a solução foi concebida para ser não invasiva: ela não exige nenhuma alteração no núcleo do Sistema Gerenciador de Banco de Dados (SGBD) e pode ser acoplada como complemento aos otimizadores que já existem.
+A solução foi concebida para ser não invasiva: ela não exige nenhuma alteração no núcleo do Sistema Gerenciador de Banco de Dados (SGBD) e pode ser acoplada como complemento aos otimizadores que já existem.
 
 \subsection{Processo de Reescrita de Consultas}
 
@@ -215,7 +231,7 @@ O processo se inicia com a submissão de uma consulta SQL ao sistema. Essa consu
 
 Entre as transformações esperadas estão a troca de subconsultas por junções, o uso de \textit{Common Table Expressions} (CTEs), a simplificação de predicados, a reorganização de filtros e a eliminação de operações redundantes, estratégias que a literatura já associa à redução de custos de execução e ao melhor aproveitamento dos recursos computacionais.
 
-Cabe reforçar que o modelo não tem autonomia para substituir a consulta original por conta própria. Toda reescrita precisa passar pelas etapas de validação definidas neste trabalho antes de ser aceita como alternativa válida.
+O modelo não tem autonomia para substituir a consulta original por conta própria. Toda reescrita precisa passar pelas etapas de validação definidas neste trabalho antes de ser aceita como alternativa válida.
 
 \subsection{Validação das Consultas Reescritas}
 
@@ -243,7 +259,7 @@ A depender da disponibilidade de acesso e dos recursos computacionais ao longo d
 
 \subsection{Conjunto de Dados}
 
-A avaliação utilizará bases consagradas na literatura de otimização de consultas e desempenho de bancos de dados. Entre as consideradas estão o TPC-H, o TPC-DS e o \textit{Join Order Benchmark} (JOB), montado a partir da base IMDb. Esses benchmarks reúnem consultas analíticas de diferentes níveis de complexidade, com múltiplas junções, agregações e operações de filtragem. Trabalhar com eles ajuda tanto a comparar os resultados com os de trabalhos relacionados quanto a garantir maior reprodutibilidade dos experimentos.
+A avaliação utilizará bases consagradas na literatura de otimização de consultas e desempenho de bancos de dados. Entre as consideradas estão o TPC-H \cite{tpch}, o TPC-DS \cite{nambiar2006tpcds} e o \textit{Join Order Benchmark} (JOB) \cite{leis2015job}, montado a partir da base IMDb. Esses benchmarks reúnem consultas analíticas de diferentes níveis de complexidade, com múltiplas junções, agregações e operações de filtragem. Trabalhar com eles ajuda tanto a comparar os resultados com os de trabalhos relacionados quanto a garantir maior reprodutibilidade dos experimentos.
 
 \subsection{Cenários de Avaliação}
 
