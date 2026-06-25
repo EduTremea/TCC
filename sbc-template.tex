@@ -104,17 +104,9 @@ A justificativa deste trabalho parte justamente dessa tensão. Um LLM pode ampli
 
 Esse cenário conduz ao problema de pesquisa que orienta o estudo: é possível reescrever consultas SQL com o auxílio de LLMs de modo a melhorar o desempenho sem comprometer a corretude dos resultados?
 
-Para responder a essa pergunta, define-se como objetivo geral desenvolver e avaliar um mecanismo de reescrita de consultas SQL baseado em LLMs, apoiado por etapas de validação sintática, semântica e de desempenho conduzidas pelo próprio SGBD.
+O objetivo geral é desenvolver e avaliar um mecanismo de reescrita de consultas SQL baseado em LLMs, apoiado por etapas de validação sintática, semântica e de desempenho realizadas pelo próprio SGBD. O trabalho visa ainda identificar na literatura as principais técnicas de otimização e reescrita orientadas por aprendizado de máquina e por modelos de linguagem; projetar uma arquitetura não invasiva que intermedie a comunicação entre a consulta original, o LLM e o banco de dados; implementar um processo de validação que combine verificação sintática, comparação semântica de resultados e análise de planos de execução; comparar o desempenho das consultas em cenários sem reescrita, com reescrita sem validação e com reescrita validada; e avaliar a viabilidade da abordagem para uso em ambientes reais, considerando ganhos de desempenho e preservação da semântica.
 
-Como objetivos específicos, o trabalho se propõe a:
-
-\begin{itemize}
-    \item levantar, na literatura, as principais técnicas de otimização e de reescrita de consultas baseadas em aprendizado de máquina e em modelos de linguagem;
-    \item projetar uma arquitetura não invasiva, capaz de intermediar a comunicação entre a consulta original, o LLM e o banco de dados;
-    \item implementar um processo de validação que combine verificação sintática, comparação semântica de resultados e análise dos planos de execução;
-    \item comparar o desempenho das consultas em três cenários sem reescrita, com reescrita sem validação e com reescrita validada;
-    \item avaliar a viabilidade da abordagem para uso em ambientes reais, considerando os ganhos de desempenho e a preservação da semântica.
-\end{itemize}
+O objetivo final é construir uma proposta que preserve a equivalência da consulta original e ofereça um ganho prático de desempenho, tratando explicitamente os riscos de alucinação e regressão introduzidos pelos LLMs. Este artigo apresenta a motivação e o problema de pesquisa, descreve o referencial teórico e os trabalhos relacionados, detalha a arquitetura da solução proposta, o processo de validação e o ambiente experimental, e discute os resultados obtidos e as contribuições do estudo para a otimização de consultas SQL.
 
 \section{Referencial Teórico}
 
@@ -183,23 +175,23 @@ Esta seção reúne os principais estudos que aplicam Inteligência Artificial, 
 
 \item \textbf{O uso da Inteligência Artificial na otimização de consultas em bancos de dados} \cite{amaral2025}
 
-Os autores investigam até que ponto o ChatGPT é capaz de reescrever consultas de forma semântica em ambientes PostgreSQL. Para isso, montam um experimento com scripts em Python que automatizam a execução das consultas e a coleta de métricas, com foco em transformações como o uso de \textit{Common Table Expressions} (CTEs), pré-agregações e redução de subconsultas. Em cenários complexos, com muitos \textit{joins}, a reescrita assistida por IA chegou a reduzir o tempo de execução em até 90\%, além de racionalizar o uso de índices e tabelas.
+Os autores investigam até que ponto o ChatGPT é capaz de reescrever consultas de forma semântica em ambientes PostgreSQL. Para isso, montam um experimento com scripts em Python que automatizam a execução das consultas e a coleta de métricas, com foco em transformações como o uso de \textit{Common Table Expressions} (CTEs), pré-agregações e redução de subconsultas. Em cenários complexos, com muitos \textit{joins}, a reescrita assistida por IA chegou a reduzir o tempo de execução em até 90\%, além de racionalizar o uso de índices e tabelas. O estudo ressalta, porém, a importância de verificar a equivalência dos resultados e de não aceitar a saída do modelo sem validação adicional.
 
 \item \textbf{LLM-R2: A Large Language Model Enhanced Rule-based Rewrite System} \cite{li2024llmr2}
 
-O LLM-R2 usa LLMs para sugerir sequências de regras de reescrita voltadas a plataformas como o Apache Calcite. Seu principal trunfo é um modelo contrastivo, treinado por currículo, que seleciona demonstrações (\textit{few-shot}) estruturalmente parecidas com a consulta de entrada. Como a execução final das regras fica a cargo do próprio motor do banco, o sistema garante que a reescrita seja executável e semanticamente equivalente, algo que abordagens de geração livre, mais sujeitas a alucinações, nem sempre conseguem.
+O LLM-R2 usa LLMs para sugerir sequências de regras de reescrita voltadas a plataformas como o Apache Calcite. Seu principal trunfo é um modelo contrastivo, treinado por currículo, que seleciona demonstrações (\textit{few-shot}) estruturalmente parecidas com a consulta de entrada. Como a execução final das regras fica a cargo do próprio motor do banco, o sistema garante que a reescrita seja executável e semanticamente equivalente, algo que abordagens de geração livre, mais sujeitas a alucinações, nem sempre conseguem. O trabalho também destaca a necessidade de combinar a criatividade dos modelos de linguagem com a segurança das regras já estabelecidas pelo SGBD.
 
 \item \textbf{R-Bot: An LLM-based Query Rewrite System} \cite{sun2025rbot}
 
-O R-Bot busca reduzir alucinações apoiando-se em uma arquitetura de \textit{Retrieval-Augmented Generation} (RAG). A recuperação é híbrida: combina características estruturais e semânticas para localizar ``receitas de reescrita'' e evidências em fóruns técnicos e manuais de SGBDs. A reescrita acontece passo a passo, com autorreflexão, o que permite ao modelo entender como as regras se relacionam antes de aplicá-las.
+O R-Bot busca reduzir alucinações apoiando-se em uma arquitetura de \textit{Retrieval-Augmented Generation} (RAG). A recuperação é híbrida: combina características estruturais e semânticas para localizar ``receitas de reescrita'' e evidências em fóruns técnicos e manuais de SGBDs. A reescrita acontece passo a passo, com autorreflexão, o que permite ao modelo entender como as regras se relacionam antes de aplicá-las. Essa abordagem evidencia a utilidade de múltiplos estágios de verificação para conferir maior segurança às transformações sugeridas.
 
 \item \textbf{LITHE: A Query Rewrite Advisor using LLMs} \cite{dharwada2026lithe}
 
-O LITHE trabalha diretamente no espaço da consulta (\textit{SQL-to-SQL}), e não no espaço do plano físico. Ele aplica regras sensíveis ao banco, apoiadas em seletividade e metadados, e as combina com uma busca em árvore de Monte Carlo (\textit{Monte Carlo Tree Search}, MCTS) guiada pelas probabilidades de \textit{tokens} do LLM. Quando a confiança do modelo é baixa, essa estratégia abre espaço para explorar vários caminhos de reescrita, alcançando ganhos expressivos em relação aos otimizadores nativos.
+O LITHE trabalha diretamente no espaço da consulta (\textit{SQL-to-SQL}), e não no espaço do plano físico. Ele aplica regras sensíveis ao banco, apoiadas em seletividade e metadados, e as combina com uma busca em árvore de Monte Carlo (\textit{Monte Carlo Tree Search}, MCTS) guiada pelas probabilidades de \textit{tokens} do LLM. Quando a confiança do modelo é baixa, essa estratégia abre espaço para explorar vários caminhos de reescrita, alcançando ganhos expressivos em relação aos otimizadores nativos. O método ilustra como a incerteza do modelo pode ser gerida por buscas controladas e por validações iterativas.
 
 \item \textbf{QUITE: A Query Rewrite System Beyond Rules with LLM Agents} \cite{song2025quite}
 
-O QUITE é um \textit{framework} de múltiplos agentes coordenados por uma Máquina de Estados Finita (\textit{Finite State Machine}, FSM). Ele recebe \textit{feedback} em tempo real do banco por meio de comandos \texttt{EXPLAIN} e injeta \textit{hints} para garantir que o plano otimizado seja de fato seguido na execução. Por não depender apenas de regras fixas, consegue encontrar otimizações que transformações pré-definidas não alcançariam.
+O QUITE é um \textit{framework} de múltiplos agentes coordenados por uma Máquina de Estados Finita (\textit{Finite State Machine}, FSM). Ele recebe \textit{feedback} em tempo real do banco por meio de comandos \texttt{EXPLAIN} e injeta \textit{hints} para garantir que o plano otimizado seja de fato seguido na execução. Por não depender apenas de regras fixas, consegue encontrar otimizações que transformações pré-definidas não alcançariam. O trabalho demonstra a relevância de integrar a validação do plano como parte do ciclo de reescrita.
 
 \end{itemize}
 
