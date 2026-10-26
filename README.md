@@ -37,7 +37,3 @@ Em seguida, abra a pasta do projeto no VS Code e use os comandos da extensão pa
 - O arquivo principal é `sbc-template.tex`.
 - A pasta `sty/` contém estilos usados pelo documento.
 - Este README foi ajustado para ficar mais direto e mais fácil de usar.
-
-
-
-
