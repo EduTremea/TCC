@@ -1,0 +1,22 @@
+[project]
+name = "tcc-prototipo"
+version = "0.1.0"
+description = "Reescrita de consultas SQL com LLMs e validacao pelo proprio SGBD"
+requires-python = "==3.12.*"
+dependencies = [
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.1",
+    "pandas>=2.2",
+    "matplotlib>=3.8",
+    "python-dotenv>=1.0",
+    "ollama>=0.3",
+    "openai>=3.22.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

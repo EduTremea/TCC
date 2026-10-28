@@ -1,0 +1,2 @@
+modelo,config,query_id,rodadas,razao_tempo_min,razao_tempo_max,custo_orig,custo_re
+llama3 (8B),C0,q06,1,1.17,1.17,134775.81,134775.81

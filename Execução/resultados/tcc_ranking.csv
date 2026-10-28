@@ -1,0 +1,6 @@
+nivel,otimizada (custo),"otimizada E tempo >= 1,15","tempo >= 1,15 (so tempo)","mesma ordem custo x tempo1,15"
+C0,gpt-4o > llama3.2 (3B) > llama3 (8B),gpt-4o > llama3.2 (3B) > llama3 (8B),gpt-4o > llama3 (8B) > llama3.2 (3B),False
+C1,gpt-4o > llama3 (8B) > llama3.2 (3B),gpt-4o > llama3 (8B) > llama3.2 (3B),gpt-4o > llama3 (8B) > llama3.2 (3B),True
+C2,gpt-4o > llama3 (8B) > llama3.2 (3B),gpt-4o > llama3 (8B) > llama3.2 (3B),gpt-4o > llama3 (8B) > llama3.2 (3B),True
+C3,gpt-4o > llama3.2 (3B) > llama3 (8B),gpt-4o > llama3.2 (3B) > llama3 (8B),gpt-4o > llama3 (8B) > llama3.2 (3B),False
+total,gpt-4o > llama3 (8B) > llama3.2 (3B),gpt-4o > llama3 (8B) > llama3.2 (3B),gpt-4o > llama3 (8B) > llama3.2 (3B),True

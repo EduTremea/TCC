@@ -1,0 +1,13 @@
+modelo,config,invalida_sintaxe,invalida_resultado,sem_mudanca,valida_sem_ganho,otimizada,n,erros_execucao (dentro de invalida_sintaxe),de
+llama3.2 (3B),C0,3,3,18,9,21,54,0,54
+llama3.2 (3B),C1,6,9,9,9,21,54,0,54
+llama3.2 (3B),C2,9,12,6,12,15,54,3,54
+llama3.2 (3B),C3,9,15,6,9,15,54,3,54
+llama3 (8B),C0,9,6,6,12,21,54,0,54
+llama3 (8B),C1,3,3,3,21,24,54,0,54
+llama3 (8B),C2,0,15,6,12,21,54,0,54
+llama3 (8B),C3,6,18,0,15,15,54,0,54
+gpt-4o,C0,0,10,0,17,27,54,0,54
+gpt-4o,C1,0,6,0,15,33,54,0,54
+gpt-4o,C2,0,9,0,12,33,54,0,54
+gpt-4o,C3,0,7,0,15,32,54,0,54

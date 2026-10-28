@@ -1,0 +1,4 @@
+tipo,llama3.2 (3B),llama3 (8B),gpt-4o,total
+mais linhas,18,24,16,58
+menos linhas,6,9,12,27
+"mesmo numero, valores diferentes",15,9,4,28

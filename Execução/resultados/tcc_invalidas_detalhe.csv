@@ -1,0 +1,506 @@
+modelo,config,rodada,query_id,tipo,linhas_original,linhas_reescrita,sql_reescrita
+llama3.2 (3B),C0,1,agregacao_03,mais linhas,1,4999,SELECT count(*) AS n FROM pedido GROUP BY cliente_id
+llama3.2 (3B),C0,2,agregacao_03,mais linhas,1,4999,SELECT count(*) AS n FROM pedido GROUP BY cliente_id
+llama3.2 (3B),C0,3,agregacao_03,mais linhas,1,4999,SELECT count(*) AS n FROM pedido GROUP BY cliente_id
+llama3 (8B),C0,3,correcao_03,"mesmo numero, valores diferentes",1,1,"SELECT count(*) AS n
+FROM pedido
+WHERE status = 'pago';"
+llama3 (8B),C0,1,correcao_03,"mesmo numero, valores diferentes",1,1,"SELECT count(*) AS n
+FROM pedido
+WHERE status = 'pago';"
+llama3 (8B),C0,1,agregacao_03,mais linhas,1,4999,SELECT count(*) AS n FROM pedido GROUP BY cliente_id;
+llama3 (8B),C0,2,agregacao_03,mais linhas,1,4999,SELECT count(*) AS n FROM pedido GROUP BY cliente_id;
+llama3 (8B),C0,2,correcao_03,"mesmo numero, valores diferentes",1,1,"SELECT count(*) AS n
+FROM pedido
+WHERE status = 'pago';"
+llama3 (8B),C0,3,agregacao_03,mais linhas,1,4999,SELECT count(*) AS n FROM pedido GROUP BY cliente_id;
+gpt-4o,C0,2,agregacao_01,menos linhas,29949,28482,"SELECT p.id, sum(i.quantidade * i.preco_unit) AS total
+FROM pedido p
+JOIN item_pedido i ON i.pedido_id = p.id
+WHERE p.status = 'pago'
+GROUP BY p.id"
+gpt-4o,C0,2,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pedido pe ON c.id = pe.cupom_id AND pe.status = 'pago'
+WHERE pe.cupom_id IS NULL"
+gpt-4o,C0,2,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT count(*) AS n FROM pedido WHERE status = 'pago'
+gpt-4o,C0,1,agregacao_01,menos linhas,29949,28482,"SELECT p.id, sum(i.quantidade * i.preco_unit) AS total
+FROM pedido p
+JOIN item_pedido i ON i.pedido_id = p.id
+WHERE p.status = 'pago'
+GROUP BY p.id"
+gpt-4o,C0,1,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pedido pe ON c.id = pe.cupom_id AND pe.status = 'pago'
+WHERE pe.cupom_id IS NULL"
+gpt-4o,C0,1,correcao_02,mais linhas,5,4989,"SELECT c.uf
+FROM cliente c
+WHERE EXISTS (
+  SELECT 1
+  FROM pedido p
+  WHERE p.cliente_id = c.id AND p.status = 'pago'
+)"
+gpt-4o,C0,1,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT count(*) AS n FROM pedido WHERE status = 'pago'
+gpt-4o,C0,3,agregacao_01,menos linhas,29949,28482,"SELECT p.id, total.total
+FROM pedido p
+JOIN (
+    SELECT i.pedido_id, SUM(i.quantidade * i.preco_unit) AS total
+    FROM item_pedido i
+    GROUP BY i.pedido_id
+) total ON p.id = total.pedido_id
+WHERE p.status = 'pago'"
+gpt-4o,C0,3,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pedido pe ON c.id = pe.cupom_id AND pe.status = 'pago'
+WHERE pe.cupom_id IS NULL"
+gpt-4o,C0,3,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT count(*) AS n FROM pedido WHERE status = 'pago'
+llama3.2 (3B),C1,1,correcao_01,mais linhas,0,20051,"SELECT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.status != 'pago'"
+llama3.2 (3B),C2,1,correcao_01,mais linhas,0,4989,"SELECT DISTINCT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.status = 'pago'"
+llama3.2 (3B),C3,1,correcao_01,mais linhas,0,29949,"SELECT c.id, c.nome FROM cliente c JOIN pedido pe ON c.id = pe.cliente_id WHERE pe.status = 'pago'"
+llama3.2 (3B),C3,1,correcao_02,mais linhas,5,29949,SELECT c.uf FROM cliente c JOIN pedido p ON p.cliente_id = c.id WHERE p.status = 'pago'
+llama3.2 (3B),C1,1,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT cupom_id) AS n FROM pedido WHERE status = 'pago';
+llama3.2 (3B),C2,1,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT cupom_id) AS n FROM pedido WHERE status = 'pago'
+llama3.2 (3B),C3,1,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT cupom_id) AS n FROM pedido WHERE status = 'pago'
+llama3.2 (3B),C2,1,redundancia_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT id) FROM pedido
+llama3.2 (3B),C3,1,redundancia_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT id) FROM pedido
+llama3.2 (3B),C2,1,subconsulta_01,menos linhas,1069,0,"SELECT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.id IN (SELECT pedido_id FROM item_pedido GROUP BY pedido_id HAVING COUNT(*) > 12)"
+llama3.2 (3B),C1,3,correcao_01,mais linhas,0,20051,"SELECT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.status != 'pago'"
+llama3.2 (3B),C3,1,subconsulta_01,menos linhas,1069,0,"SELECT c.id, c.nome
+FROM cliente c
+JOIN pedido p ON c.id = p.cliente_id
+WHERE p.id IN (
+  SELECT p.id
+  FROM pedido p
+  GROUP BY p.id
+  HAVING COUNT(p.cliente_id) > 12
+)"
+llama3.2 (3B),C1,1,subconsulta_02,mais linhas,4303,10043,"SELECT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.status = 'cancelado'"
+llama3.2 (3B),C1,2,correcao_01,mais linhas,0,20051,"SELECT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.status != 'pago'"
+llama3.2 (3B),C2,2,correcao_01,mais linhas,0,4989,"SELECT DISTINCT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.status = 'pago'"
+llama3.2 (3B),C3,2,correcao_01,mais linhas,0,29949,"SELECT c.id, c.nome FROM cliente c JOIN pedido pe ON c.id = pe.cliente_id WHERE pe.status = 'pago'"
+llama3.2 (3B),C3,2,correcao_02,mais linhas,5,29949,SELECT c.uf FROM cliente c JOIN pedido p ON p.cliente_id = c.id WHERE p.status = 'pago'
+llama3.2 (3B),C1,2,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT cupom_id) AS n FROM pedido WHERE status = 'pago';
+llama3.2 (3B),C2,2,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT cupom_id) AS n FROM pedido WHERE status = 'pago'
+llama3.2 (3B),C3,2,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT cupom_id) AS n FROM pedido WHERE status = 'pago'
+llama3.2 (3B),C2,2,redundancia_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT id) FROM pedido
+llama3.2 (3B),C3,2,redundancia_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT id) FROM pedido
+llama3.2 (3B),C2,2,subconsulta_01,menos linhas,1069,0,"SELECT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.id IN (SELECT pedido_id FROM item_pedido GROUP BY pedido_id HAVING COUNT(*) > 12)"
+llama3.2 (3B),C3,2,subconsulta_01,menos linhas,1069,0,"SELECT c.id, c.nome
+FROM cliente c
+JOIN pedido p ON c.id = p.cliente_id
+WHERE p.id IN (
+  SELECT p.id
+  FROM pedido p
+  GROUP BY p.id
+  HAVING COUNT(p.cliente_id) > 12
+)"
+llama3.2 (3B),C1,2,subconsulta_02,mais linhas,4303,10043,"SELECT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.status = 'cancelado'"
+llama3.2 (3B),C2,3,correcao_01,mais linhas,0,4989,"SELECT DISTINCT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.status = 'pago'"
+llama3.2 (3B),C3,3,correcao_01,mais linhas,0,29949,"SELECT c.id, c.nome FROM cliente c JOIN pedido pe ON c.id = pe.cliente_id WHERE pe.status = 'pago'"
+llama3.2 (3B),C3,3,correcao_02,mais linhas,5,29949,SELECT c.uf FROM cliente c JOIN pedido p ON p.cliente_id = c.id WHERE p.status = 'pago'
+llama3.2 (3B),C1,3,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT cupom_id) AS n FROM pedido WHERE status = 'pago';
+llama3.2 (3B),C2,3,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT cupom_id) AS n FROM pedido WHERE status = 'pago'
+llama3.2 (3B),C3,3,correcao_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT cupom_id) AS n FROM pedido WHERE status = 'pago'
+llama3.2 (3B),C2,3,redundancia_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT id) FROM pedido
+llama3.2 (3B),C3,3,redundancia_03,"mesmo numero, valores diferentes",1,1,SELECT COUNT(DISTINCT id) FROM pedido
+llama3.2 (3B),C2,3,subconsulta_01,menos linhas,1069,0,"SELECT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.id IN (SELECT pedido_id FROM item_pedido GROUP BY pedido_id HAVING COUNT(*) > 12)"
+llama3.2 (3B),C3,3,subconsulta_01,menos linhas,1069,0,"SELECT c.id, c.nome
+FROM cliente c
+JOIN pedido p ON c.id = p.cliente_id
+WHERE p.id IN (
+  SELECT p.id
+  FROM pedido p
+  GROUP BY p.id
+  HAVING COUNT(p.cliente_id) > 12
+)"
+llama3.2 (3B),C1,3,subconsulta_02,mais linhas,4303,10043,"SELECT c.id, c.nome FROM cliente c JOIN pedido p ON c.id = p.cliente_id WHERE p.status = 'cancelado'"
+llama3 (8B),C2,1,agregacao_01,menos linhas,29949,28482,"WITH total_pedido AS (
+  SELECT p.id,
+         SUM(i.quantidade * i.preco_unit) AS total
+  FROM pedido p
+  JOIN item_pedido i ON i.pedido_id = p.id
+  WHERE p.status = 'pago'
+  GROUP BY p.id
+)
+SELECT tp.id, tp.total
+FROM total_pedido tp;"
+llama3 (8B),C3,1,agregacao_01,menos linhas,29949,28482,"WITH total_pedido AS (
+  SELECT p.id, SUM(i.quantidade * i.preco_unit) AS total
+  FROM pedido p
+  JOIN item_pedido i ON p.id = i.pedido_id
+  WHERE p.status = 'pago'
+  GROUP BY p.id
+)
+SELECT tp.id, tp.total
+FROM total_pedido tp;"
+llama3 (8B),C2,1,agregacao_03,mais linhas,1,4999,"SELECT count(*) AS n
+FROM pedido
+GROUP BY cliente_id"
+llama3 (8B),C3,1,agregacao_03,mais linhas,1,4999,"SELECT count(*) AS n
+FROM pedido
+GROUP BY cliente_id;"
+llama3 (8B),C1,1,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM pedido pe
+  WHERE pe.cupom_id = c.id AND pe.status = 'pago'
+)"
+llama3 (8B),C3,1,correcao_01,mais linhas,0,5000,"WITH pagos AS (
+  SELECT cupom_id
+  FROM pedido
+  WHERE status = 'pago'
+)
+SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pagos p ON c.id NOT IN (SELECT cupom_id FROM pagos)
+WHERE p.cupom_id IS NULL;"
+llama3 (8B),C2,1,correcao_02,mais linhas,5,29949,"SELECT c.uf
+FROM cliente c
+JOIN pedido p ON p.cliente_id = c.id
+WHERE p.status = 'pago'"
+llama3 (8B),C3,1,correcao_03,"mesmo numero, valores diferentes",1,1,"WITH pagos AS (
+  SELECT 1 AS n
+  FROM pedido
+  WHERE status = 'pago'
+)
+SELECT count(*) AS n
+FROM pagos;"
+llama3 (8B),C3,1,juncao_02,"mesmo numero, valores diferentes",29949,29949,"WITH pagos AS (
+  SELECT c.id, c.nome, c.cidade, c.uf, p.data, p.status
+  FROM cliente c
+  JOIN pedido p ON c.id = p.cliente_id
+  WHERE p.status = 'pago'
+)
+SELECT p.id
+FROM pagos p
+WHERE p.status = 'pago';"
+llama3 (8B),C2,1,subconsulta_01,menos linhas,1069,0,"WITH pedidos_cliente AS (
+  SELECT c.id, count(*) AS quantidade_pedidos
+  FROM cliente c
+  GROUP BY c.id
+)
+SELECT c.id, c.nome
+FROM cliente c
+JOIN pedidos_cliente pc ON c.id = pc.id
+WHERE pc.quantidade_pedidos > 12"
+llama3 (8B),C2,1,subconsulta_03,mais linhas,10302,11543,"WITH produtos_bebidas AS (
+  SELECT id FROM produto WHERE categoria = 'Bebidas'
+)
+SELECT i.pedido_id
+FROM item_pedido i
+WHERE i.produto_id IN (SELECT * FROM produtos_bebidas)"
+llama3 (8B),C3,1,subconsulta_03,mais linhas,10302,11543,"WITH bebidas AS (
+  SELECT id FROM produto WHERE categoria = 'Bebidas'
+)
+SELECT i.pedido_id
+FROM item_pedido i
+JOIN bebidas ON i.produto_id = bebidas.id;"
+llama3 (8B),C2,2,agregacao_01,menos linhas,29949,28482,"WITH total_pedido AS (
+  SELECT p.id,
+         SUM(i.quantidade * i.preco_unit) AS total
+  FROM pedido p
+  JOIN item_pedido i ON i.pedido_id = p.id
+  WHERE p.status = 'pago'
+  GROUP BY p.id
+)
+SELECT tp.id, tp.total
+FROM total_pedido tp;"
+llama3 (8B),C3,2,agregacao_01,menos linhas,29949,28482,"WITH total_pedido AS (
+  SELECT p.id, SUM(i.quantidade * i.preco_unit) AS total
+  FROM pedido p
+  JOIN item_pedido i ON p.id = i.pedido_id
+  WHERE p.status = 'pago'
+  GROUP BY p.id
+)
+SELECT tp.id, tp.total
+FROM total_pedido tp;"
+llama3 (8B),C2,2,agregacao_03,mais linhas,1,4999,"SELECT count(*) AS n
+FROM pedido
+GROUP BY cliente_id"
+llama3 (8B),C3,2,agregacao_03,mais linhas,1,4999,"SELECT count(*) AS n
+FROM pedido
+GROUP BY cliente_id;"
+llama3 (8B),C1,2,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM pedido pe
+  WHERE pe.cupom_id = c.id AND pe.status = 'pago'
+)"
+llama3 (8B),C3,2,correcao_01,mais linhas,0,5000,"WITH pagos AS (
+  SELECT cupom_id
+  FROM pedido
+  WHERE status = 'pago'
+)
+SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pagos p ON c.id NOT IN (SELECT cupom_id FROM pagos)
+WHERE p.cupom_id IS NULL;"
+llama3 (8B),C3,2,correcao_03,"mesmo numero, valores diferentes",1,1,"WITH pagos AS (
+  SELECT 1 AS n
+  FROM pedido
+  WHERE status = 'pago'
+)
+SELECT count(*) AS n
+FROM pagos;"
+llama3 (8B),C2,2,correcao_02,mais linhas,5,29949,"SELECT c.uf
+FROM cliente c
+JOIN pedido p ON p.cliente_id = c.id
+WHERE p.status = 'pago'"
+llama3 (8B),C3,2,juncao_02,"mesmo numero, valores diferentes",29949,29949,"WITH pagos AS (
+  SELECT c.id, c.nome, c.cidade, c.uf, p.data, p.status
+  FROM cliente c
+  JOIN pedido p ON c.id = p.cliente_id
+  WHERE p.status = 'pago'
+)
+SELECT p.id
+FROM pagos p
+WHERE p.status = 'pago';"
+llama3 (8B),C2,2,subconsulta_01,menos linhas,1069,0,"WITH pedidos_cliente AS (
+  SELECT c.id, count(*) AS quantidade_pedidos
+  FROM cliente c
+  GROUP BY c.id
+)
+SELECT c.id, c.nome
+FROM cliente c
+JOIN pedidos_cliente pc ON c.id = pc.id
+WHERE pc.quantidade_pedidos > 12"
+llama3 (8B),C2,2,subconsulta_03,mais linhas,10302,11543,"WITH produtos_bebidas AS (
+  SELECT id FROM produto WHERE categoria = 'Bebidas'
+)
+SELECT i.pedido_id
+FROM item_pedido i
+WHERE i.produto_id IN (SELECT * FROM produtos_bebidas)"
+llama3 (8B),C3,2,subconsulta_03,mais linhas,10302,11543,"WITH bebidas AS (
+  SELECT id FROM produto WHERE categoria = 'Bebidas'
+)
+SELECT i.pedido_id
+FROM item_pedido i
+JOIN bebidas ON i.produto_id = bebidas.id;"
+llama3 (8B),C2,3,agregacao_01,menos linhas,29949,28482,"WITH total_pedido AS (
+  SELECT p.id,
+         SUM(i.quantidade * i.preco_unit) AS total
+  FROM pedido p
+  JOIN item_pedido i ON i.pedido_id = p.id
+  WHERE p.status = 'pago'
+  GROUP BY p.id
+)
+SELECT tp.id, tp.total
+FROM total_pedido tp;"
+llama3 (8B),C3,3,agregacao_01,menos linhas,29949,28482,"WITH total_pedido AS (
+  SELECT p.id, SUM(i.quantidade * i.preco_unit) AS total
+  FROM pedido p
+  JOIN item_pedido i ON p.id = i.pedido_id
+  WHERE p.status = 'pago'
+  GROUP BY p.id
+)
+SELECT tp.id, tp.total
+FROM total_pedido tp;"
+llama3 (8B),C2,3,agregacao_03,mais linhas,1,4999,"SELECT count(*) AS n
+FROM pedido
+GROUP BY cliente_id"
+llama3 (8B),C3,3,agregacao_03,mais linhas,1,4999,"SELECT count(*) AS n
+FROM pedido
+GROUP BY cliente_id;"
+llama3 (8B),C1,3,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM pedido pe
+  WHERE pe.cupom_id = c.id AND pe.status = 'pago'
+)"
+llama3 (8B),C3,3,correcao_01,mais linhas,0,5000,"WITH pagos AS (
+  SELECT cupom_id
+  FROM pedido
+  WHERE status = 'pago'
+)
+SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pagos p ON c.id NOT IN (SELECT cupom_id FROM pagos)
+WHERE p.cupom_id IS NULL;"
+llama3 (8B),C3,3,correcao_03,"mesmo numero, valores diferentes",1,1,"WITH pagos AS (
+  SELECT 1 AS n
+  FROM pedido
+  WHERE status = 'pago'
+)
+SELECT count(*) AS n
+FROM pagos;"
+llama3 (8B),C2,3,correcao_02,mais linhas,5,29949,"SELECT c.uf
+FROM cliente c
+JOIN pedido p ON p.cliente_id = c.id
+WHERE p.status = 'pago'"
+llama3 (8B),C3,3,juncao_02,"mesmo numero, valores diferentes",29949,29949,"WITH pagos AS (
+  SELECT c.id, c.nome, c.cidade, c.uf, p.data, p.status
+  FROM cliente c
+  JOIN pedido p ON c.id = p.cliente_id
+  WHERE p.status = 'pago'
+)
+SELECT p.id
+FROM pagos p
+WHERE p.status = 'pago';"
+llama3 (8B),C2,3,subconsulta_01,menos linhas,1069,0,"WITH pedidos_cliente AS (
+  SELECT c.id, count(*) AS quantidade_pedidos
+  FROM cliente c
+  GROUP BY c.id
+)
+SELECT c.id, c.nome
+FROM cliente c
+JOIN pedidos_cliente pc ON c.id = pc.id
+WHERE pc.quantidade_pedidos > 12"
+llama3 (8B),C2,3,subconsulta_03,mais linhas,10302,11543,"WITH produtos_bebidas AS (
+  SELECT id FROM produto WHERE categoria = 'Bebidas'
+)
+SELECT i.pedido_id
+FROM item_pedido i
+WHERE i.produto_id IN (SELECT * FROM produtos_bebidas)"
+llama3 (8B),C3,3,subconsulta_03,mais linhas,10302,11543,"WITH bebidas AS (
+  SELECT id FROM produto WHERE categoria = 'Bebidas'
+)
+SELECT i.pedido_id
+FROM item_pedido i
+JOIN bebidas ON i.produto_id = bebidas.id;"
+gpt-4o,C1,1,agregacao_01,menos linhas,29949,28482,"SELECT p.id,
+       SUM(i.quantidade * i.preco_unit) AS total
+FROM pedido p
+JOIN item_pedido i ON i.pedido_id = p.id
+WHERE p.status = 'pago'
+GROUP BY p.id"
+gpt-4o,C2,1,agregacao_01,menos linhas,29949,28482,"WITH total_por_pedido AS (
+    SELECT pedido_id, SUM(quantidade * preco_unit) AS total
+    FROM item_pedido
+    GROUP BY pedido_id
+)
+SELECT p.id, t.total
+FROM pedido p
+JOIN total_por_pedido t ON p.id = t.pedido_id
+WHERE p.status = 'pago'"
+gpt-4o,C3,1,agregacao_01,menos linhas,29949,28482,"WITH total_por_pedido AS (
+    SELECT pedido_id, sum(quantidade * preco_unit) AS total
+    FROM item_pedido
+    GROUP BY pedido_id
+)
+SELECT p.id, t.total
+FROM pedido p
+JOIN total_por_pedido t ON p.id = t.pedido_id
+WHERE p.status = 'pago'"
+gpt-4o,C1,1,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pedido pe ON c.id = pe.cupom_id AND pe.status = 'pago'
+WHERE pe.cupom_id IS NULL"
+gpt-4o,C2,1,correcao_01,mais linhas,0,4901,"WITH cupons_pagos AS (
+  SELECT DISTINCT pe.cupom_id
+  FROM pedido pe
+  WHERE pe.status = 'pago' AND pe.cupom_id IS NOT NULL
+)
+SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN cupons_pagos cp ON c.id = cp.cupom_id
+WHERE cp.cupom_id IS NULL"
+gpt-4o,C3,1,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pedido pe ON c.id = pe.cupom_id AND pe.status = 'pago'
+WHERE pe.cupom_id IS NULL"
+gpt-4o,C2,1,subconsulta_03,mais linhas,10302,11543,"SELECT i.pedido_id
+FROM item_pedido i
+JOIN produto pr ON i.produto_id = pr.id
+WHERE pr.categoria = 'Bebidas'"
+gpt-4o,C1,2,agregacao_01,menos linhas,29949,28482,"SELECT p.id,
+       SUM(i.quantidade * i.preco_unit) AS total
+FROM pedido p
+JOIN item_pedido i ON i.pedido_id = p.id
+WHERE p.status = 'pago'
+GROUP BY p.id"
+gpt-4o,C2,2,agregacao_01,menos linhas,29949,28482,"WITH total_por_pedido AS (
+    SELECT pedido_id, SUM(quantidade * preco_unit) AS total
+    FROM item_pedido
+    GROUP BY pedido_id
+)
+SELECT p.id, t.total
+FROM pedido p
+JOIN total_por_pedido t ON p.id = t.pedido_id
+WHERE p.status = 'pago'"
+gpt-4o,C3,2,agregacao_01,menos linhas,29949,28482,"WITH total_por_pedido AS (
+    SELECT pedido_id, SUM(quantidade * preco_unit) AS total
+    FROM item_pedido
+    GROUP BY pedido_id
+)
+SELECT p.id, t.total
+FROM pedido p
+JOIN total_por_pedido t ON p.id = t.pedido_id
+WHERE p.status = 'pago'"
+gpt-4o,C1,2,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pedido pe ON c.id = pe.cupom_id AND pe.status = 'pago'
+WHERE pe.cupom_id IS NULL"
+gpt-4o,C2,2,correcao_01,mais linhas,0,4901,"WITH cupons_pagos AS (
+    SELECT DISTINCT pe.cupom_id
+    FROM pedido pe
+    WHERE pe.status = 'pago' AND pe.cupom_id IS NOT NULL
+)
+SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN cupons_pagos cp ON c.id = cp.cupom_id
+WHERE cp.cupom_id IS NULL"
+gpt-4o,C3,2,correcao_01,mais linhas,0,4901,"WITH pedidos_pagos AS (
+  SELECT DISTINCT pe.cupom_id
+  FROM pedido pe
+  WHERE pe.status = 'pago' AND pe.cupom_id IS NOT NULL
+)
+SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pedidos_pagos pp ON c.id = pp.cupom_id
+WHERE pp.cupom_id IS NULL"
+gpt-4o,C1,3,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pedido pe ON c.id = pe.cupom_id AND pe.status = 'pago'
+WHERE pe.cupom_id IS NULL"
+gpt-4o,C2,2,subconsulta_03,mais linhas,10302,11543,"SELECT i.pedido_id
+FROM item_pedido i
+JOIN produto pr ON i.produto_id = pr.id
+WHERE pr.categoria = 'Bebidas'"
+gpt-4o,C1,3,agregacao_01,menos linhas,29949,28482,"SELECT p.id,
+       SUM(i.quantidade * i.preco_unit) AS total
+FROM pedido p
+JOIN item_pedido i ON i.pedido_id = p.id
+WHERE p.status = 'pago'
+GROUP BY p.id"
+gpt-4o,C2,3,agregacao_01,menos linhas,29949,28482,"WITH total_por_pedido AS (
+    SELECT pedido_id, SUM(quantidade * preco_unit) AS total
+    FROM item_pedido
+    GROUP BY pedido_id
+)
+SELECT p.id, t.total
+FROM pedido p
+JOIN total_por_pedido t ON p.id = t.pedido_id
+WHERE p.status = 'pago'"
+gpt-4o,C3,3,agregacao_01,menos linhas,29949,28482,"WITH total_por_pedido AS (
+    SELECT pedido_id, sum(quantidade * preco_unit) AS total
+    FROM item_pedido
+    GROUP BY pedido_id
+)
+SELECT p.id, t.total
+FROM pedido p
+JOIN total_por_pedido t ON p.id = t.pedido_id
+WHERE p.status = 'pago'"
+gpt-4o,C2,3,correcao_01,mais linhas,0,4901,"WITH cupons_pagos AS (
+    SELECT DISTINCT pe.cupom_id
+    FROM pedido pe
+    WHERE pe.status = 'pago' AND pe.cupom_id IS NOT NULL
+)
+SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN cupons_pagos cp ON c.id = cp.cupom_id
+WHERE cp.cupom_id IS NULL"
+gpt-4o,C3,3,correcao_01,mais linhas,0,4901,"SELECT c.id, c.nome
+FROM cliente c
+LEFT JOIN pedido pe ON c.id = pe.cupom_id AND pe.status = 'pago'
+WHERE pe.cupom_id IS NULL"
+gpt-4o,C3,3,sargabilidade_02,"mesmo numero, valores diferentes",3,3,"SELECT status, count(*) AS total
+FROM pedido
+WHERE data > DATE '2022-02-05'
+GROUP BY status"
+gpt-4o,C2,3,subconsulta_03,mais linhas,10302,11543,"SELECT i.pedido_id
+FROM item_pedido i
+JOIN produto pr ON i.produto_id = pr.id
+WHERE pr.categoria = 'Bebidas'"

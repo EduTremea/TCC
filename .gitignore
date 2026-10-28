@@ -51,3 +51,7 @@ Thumbs.db
 *~
 .vscode/
 .idea/
+
+## Segredos e backups locais
+.env
+*.bak-*

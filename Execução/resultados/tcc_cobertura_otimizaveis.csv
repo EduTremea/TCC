@@ -1,0 +1,17 @@
+consulta,llama3.2 (3B),llama3 (8B),gpt-4o
+agregacao_01,-,-,-
+agregacao_02,3/3,3/3,3/3
+agregacao_03,3/3,-,3/3
+juncao_01,-,-,-
+juncao_02,-,-,3/3
+juncao_03,-,-,-
+redundancia_01,3/3,3/3,3/3
+redundancia_02,3/3,3/3,3/3
+redundancia_03,-,-,-
+sargabilidade_01,-,3/3,3/3
+sargabilidade_02,3/3,3/3,3/3
+sargabilidade_03,3/3,3/3,3/3
+subconsulta_01,3/3,3/3,3/3
+subconsulta_02,3/3,3/3,3/3
+subconsulta_03,-,-,-
+total (de 15),8 em >= 1 rep.; 8 nas 3 rep.,8 em >= 1 rep.; 8 nas 3 rep.,10 em >= 1 rep.; 10 nas 3 rep.

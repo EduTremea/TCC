@@ -1,0 +1,7 @@
+categoria_consulta,llama3.2 (3B),llama3 (8B),gpt-4o,total
+agregacao,3,15,12,30
+correcao,21,15,16,52
+juncao,0,3,0,3
+redundancia,6,0,0,6
+sargabilidade,0,0,1,1
+subconsulta,9,9,3,21

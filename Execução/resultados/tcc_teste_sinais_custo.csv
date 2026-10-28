@@ -1,0 +1,7 @@
+escopo,comparacao,A > B,A < B,empates,"p-valor (sinais, bicaudal)",soma A,soma B
+C1,gpt-4o x llama3 (8B),3,0,15,0.25,33,24
+C1,gpt-4o x llama3.2 (3B),4,0,14,0.125,33,21
+C1,llama3 (8B) x llama3.2 (3B),2,1,15,1.0,24,21
+total (4 niveis),gpt-4o x llama3 (8B),7,0,11,0.0156,125,81
+total (4 niveis),gpt-4o x llama3.2 (3B),8,0,10,0.0078,125,72
+total (4 niveis),llama3 (8B) x llama3.2 (3B),5,2,11,0.4531,81,72

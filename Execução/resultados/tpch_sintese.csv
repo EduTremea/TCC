@@ -1,0 +1,4 @@
+modelo,n,melhorou_otimizada,nao_melhorou_nao_quebrou,invalidou_resultado,nao_executa,melhorou_otimizada %,nao_melhorou_nao_quebrou %,invalidou_resultado %,nao_executa %
+llama3.2 (3B),48,0,27,9,12,0,56,19,25
+llama3 (8B),48,0,27,6,15,0,56,12,31
+gpt-4o,48,0,37,11,0,0,77,23,0

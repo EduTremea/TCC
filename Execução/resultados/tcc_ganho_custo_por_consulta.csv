@@ -1,0 +1,12 @@
+query_id,llama3.2 (3B),llama3 (8B),gpt-4o,n_modelos,max/min entre modelos
+agregacao_02,88.92,88.92,94.29,3,1.06
+agregacao_03,1.12,,1.12,2,1.0
+correcao_03,,1.02,1.02,2,1.0
+juncao_02,,,1.24,1,1.0
+redundancia_01,9.21,783.74,934.27,3,101.44
+redundancia_02,2.57,2.57,2.57,3,1.0
+sargabilidade_01,,1.11,1.11,2,1.0
+sargabilidade_02,1.05,1.05,1.05,3,1.0
+sargabilidade_03,265.11,265.11,265.11,3,1.0
+subconsulta_01,17.58,2.57,16.69,3,6.84
+subconsulta_02,160.38,158.41,159.06,3,1.01

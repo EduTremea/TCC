@@ -1,0 +1,11 @@
+modelo,config,query_id,rodadas,razao_tempo_min,razao_tempo_max,custo_orig,custo_re
+llama3 (8B),C0,correcao_02,3,1.2,1.34,1264.48,1316.51
+llama3 (8B),C1,correcao_02,3,1.15,1.36,1264.48,1316.51
+llama3 (8B),C1,sargabilidade_01,1,1.17,1.17,1094.86,1219.86
+llama3 (8B),C3,juncao_01,1,1.18,1.18,1098.59,1098.59
+llama3 (8B),C3,redundancia_03,3,1.42,1.53,958.01,958.01
+gpt-4o,C0,correcao_02,2,1.22,1.3,1264.48,1316.51
+gpt-4o,C1,correcao_02,3,1.22,1.28,1264.48,1316.51
+gpt-4o,C1,redundancia_03,3,1.34,1.53,958.01,958.01
+gpt-4o,C2,redundancia_03,3,1.3,1.39,958.01,958.01
+gpt-4o,C3,redundancia_03,3,1.39,1.5,958.01,958.01

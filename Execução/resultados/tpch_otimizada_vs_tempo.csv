@@ -1,0 +1,13 @@
+modelo,config,otimizada (custo),"otimizada E tempo >= 1,15","tempo >= 1,15 (so tempo)",de
+llama3.2 (3B),C0,0.0,0.0,0.0,4
+llama3.2 (3B),C1,0.0,0.0,0.0,4
+llama3.2 (3B),C2,0.0,0.0,0.0,4
+llama3.2 (3B),C3,0.0,0.0,0.0,4
+llama3 (8B),C0,0.0,0.0,0.3,4
+llama3 (8B),C1,0.0,0.0,0.0,4
+llama3 (8B),C2,0.0,0.0,0.0,4
+llama3 (8B),C3,0.0,0.0,0.0,4
+gpt-4o,C0,0.0,0.0,0.0,4
+gpt-4o,C1,0.0,0.0,0.0,4
+gpt-4o,C2,0.0,0.0,0.0,4
+gpt-4o,C3,0.0,0.0,0.0,4

@@ -1,0 +1,21 @@
+# Ambiente Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Segredos e configuracao local
+.env
+
+# Saidas do experimento (regeradas por analise_v4.py / gerar_planilha.py)
+results/*
+!results/.gitkeep
+explicacoes/*
+!explicacoes/.gitkeep
+
+# Dados dos benchmarks (gerados localmente por gen_tpch.py, nao versionar)
+data/
+
+# Sistema
+.DS_Store
+Thumbs.db

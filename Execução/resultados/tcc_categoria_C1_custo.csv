@@ -1,0 +1,7 @@
+cat,llama3.2 (3B),llama3 (8B),gpt-4o
+agregacao,6,3,6
+correcao,0,3,3
+juncao,0,0,3
+redundancia,6,6,6
+sargabilidade,6,6,9
+subconsulta,3,6,6
