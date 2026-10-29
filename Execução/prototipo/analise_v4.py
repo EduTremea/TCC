@@ -29,7 +29,7 @@ MODELOS = {"llama3.2": "llama3.2 (3B)", "llama3": "llama3 (8B)", "gpt-4o": "gpt-
 ORDEM = list(MODELOS.values())
 NIVEIS = ["C0", "C1", "C2", "C3"]
 CATS = ["invalida_sintaxe", "invalida_resultado", "sem_mudanca", "valida_sem_ganho", "otimizada"]
-ROTULOS = {"invalida_sintaxe": "inválida: sintaxe", "invalida_resultado": "inválida: resultado",
+ROTULOS = {"invalida_sintaxe": "não executa", "invalida_resultado": "inválida por resultado",
            "sem_mudanca": "sem mudança", "valida_sem_ganho": "válida sem ganho", "otimizada": "otimizada"}
 CORES = {"invalida_sintaxe": "#8c8c8c", "invalida_resultado": "#b22222", "sem_mudanca": "#d9c27a",
          "valida_sem_ganho": "#7fa7c9", "otimizada": "#2d6a4f"}
@@ -261,7 +261,7 @@ def figura(media, caminho, de):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig, eixos = plt.subplots(1, 4, figsize=(11, 3.4), sharey=True)
+    fig, eixos = plt.subplots(1, 4, figsize=(6.3, 3.1), sharey=True)
     for eixo, cfg in zip(eixos, NIVEIS):
         sub = media[media["config"] == cfg].set_index("modelo").reindex(ORDEM)
         base = np.zeros(3)
@@ -269,15 +269,16 @@ def figura(media, caminho, de):
             eixo.bar(range(3), sub[c].values, bottom=base, color=CORES[c], label=ROTULOS[c], width=0.65)
             base = base + sub[c].values
         eixo.set_xticks(range(3))
-        eixo.set_xticklabels(["3B", "8B", "gpt-4o"], fontsize=9)
+        eixo.set_xticklabels(["3B", "8B", "GPT-4o"], fontsize=9)
+        eixo.tick_params(axis="y", labelsize=9)
         eixo.set_title(f"Fase {cfg}", fontsize=10)
         eixo.set_ylim(0, de)
         eixo.spines[["top", "right"]].set_visible(False)
-    eixos[0].set_ylabel(f"consultas (média de 3 repetições, de {de})", fontsize=8)
+    eixos[0].set_ylabel(f"consultas, de {de}\n(média de 3 repetições)", fontsize=9)
     alcas, nomes = eixos[0].get_legend_handles_labels()
-    fig.legend(alcas, nomes, loc="lower center", ncol=5, fontsize=8, frameon=False, bbox_to_anchor=(0.5, -0.04))
-    fig.tight_layout(rect=(0, 0.06, 1, 1))
-    fig.savefig(caminho, dpi=200, bbox_inches="tight")
+    fig.legend(alcas, nomes, loc="lower center", ncol=3, fontsize=9, frameon=False, bbox_to_anchor=(0.5, -0.02))
+    fig.tight_layout(rect=(0, 0.13, 1, 1))
+    fig.savefig(caminho, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 
