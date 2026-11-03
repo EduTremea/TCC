@@ -26,12 +26,14 @@
 \usepackage[scaled=0.85]{beramono}
 \usepackage{tabularray}
 \usepackage{array}
-\usepackage[hidelinks, breaklinks=true]{hyperref}
+\usepackage[draft, hidelinks, breaklinks=true]{hyperref}
 %\usepackage{hyperref}
 %\hypersetup{
 %    colorlinks=true,
 %    allcolors=blue,
 %}
+\usepackage{pdflscape}
+\usepackage[raggedrightboxes]{ragged2e}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % define o modelo de referencias
@@ -73,7 +75,7 @@
 % 2025-06-05: (fahadkalil) Adição de novos exemplos de referências bibliográficas, figuras e tabelas / Correção para que campos desnecessários no arquivo .bib sejam ignorados na renderização / Correção de espaçamento no comando \begin{itemize} usando opções adicionais na seção Trabalhos Relacionados / Correção de recuos quando utilizado o comando \begin{description} / Correção na fonte e espaçamentos do comando 'lstlisting'
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CABEÇALHO
-\title{Reescrita de Consultas SQL Baseada em Modelos de Linguagem de Grande Escala (LLM-based SQL Query Rewriting)} % titulo
+\title{Reescrita de consultas SQL baseada em LLMs} % titulo
 
 \author{Luiz Eduardo Treméa\inst{1}, Fahad Kalil\inst{1}} % autor principal, orientador
 
@@ -90,52 +92,46 @@ Passo Fundo -- RS -- Brasil
 This work evaluates SQL query rewriting by large language models under a method in which the model only proposes a rewrite and the database system classifies it by execution, result comparison and estimated cost. Two local models running on CPU, llama3.2 (3B) and llama3 (8B), were compared with GPT-4o on four TPC-H queries and on 18 inefficient queries over a controlled database, under four context phases. No model optimized a TPC-H query. On the controlled database, 15\% to 19\% of each model's runs returned a different result and were rejected; GPT-4o optimized 58\% of the runs, llama3 (8B) 38\% and llama3.2 (3B) 33\%, and no context phase brought a local model to the level of GPT-4o. Comparing results on a single instance does not prove equivalence: for one query, 32 of the 36 accepted runs are equivalent only on this database instance.
 \end{abstract}
 
+%% REVISAR: o trecho "o SGBD a classifica por execução" ficou meio confuso, melhorar.
 \begin{resumo}
-Este trabalho avalia a reescrita de consultas SQL por modelos de linguagem de grande escala sob uma metodologia em que o modelo apenas propõe a reescrita e o SGBD a classifica por execução, comparação de resultados e custo estimado. Dois modelos locais executados em CPU, o llama3.2 (3B) e o llama3 (8B), foram comparados ao GPT-4o em quatro consultas do TPC-H e em 18 consultas ineficientes de uma base controlada, em quatro fases de contexto. No TPC-H, nenhum modelo otimizou consultas. Na base controlada, de 15\% a 19\% das execuções de cada modelo alteraram o resultado e foram barradas; o GPT-4o otimizou 58\% das execuções, o llama3 (8B), 38\%, e o llama3.2 (3B), 33\%; nenhuma fase de contexto levou um modelo local ao nível do GPT-4o. A comparação sobre uma única instância não prova equivalência: em uma das consultas, 32 das 36 execuções aceitas só são equivalentes nesta base.
+Este trabalho avalia a reescrita de consultas SQL por modelos de linguagem de grande escala (LLMs) sob uma metodologia em que o modelo apenas propõe a reescrita e o SGBD a classifica por execução, comparação de resultados e custo estimado. Dois modelos locais executados em CPU, o llama3.2 (3B) e o llama3 (8B), foram comparados ao GPT-4o em quatro consultas do TPC-H e em 18 consultas ineficientes de uma base controlada, em quatro fases de contexto. No TPC-H, nenhum modelo otimizou consultas. Na base controlada, de 15\% a 19\% das execuções de cada modelo alteraram o resultado e foram barradas; o GPT-4o otimizou 58\% das execuções, o llama3 (8B), 38\%, e o llama3.2 (3B), 33\%; nenhuma fase de contexto levou um modelo local ao nível do GPT-4o. A comparação sobre uma única instância não prova equivalência: em uma das consultas, 32 das 36 execuções aceitas só são equivalentes nesta base.
 \end{resumo}
 
 \section{Introdução}
 
-Em sistemas apoiados em bancos de dados relacionais, o tempo de execução das consultas afeta diretamente o custo de infraestrutura e o tempo de resposta das aplicações. A otimização cabe ao otimizador do Sistema Gerenciador de Banco de Dados (SGBD), que escolhe um plano de execução por estimativas de custo, mas só considera as transformações que conhece \cite{chaudhuri1998}. Uma consulta mal escrita, com subconsulta correlacionada, função sobre coluna indexada ou operação redundante, pode ficar fora desse repertório, e reescrevê-la de forma equivalente produz então ganhos que o otimizador sozinho não alcança.
+Em sistemas de informação baseados em bancos de dados relacionais, o tempo de execução das consultas afeta diretamente o custo de infraestrutura e o tempo de resposta das aplicações. Otimizações são realizadas por um componente do Sistema Gerenciador de Banco de Dados (SGBD), chamado de \textit{planner} (planejador) ou \textit{optimizer} (otimizador), que escolhe um plano de execução por estimativas de custo, mas só considera as transformações que conhece \cite{chaudhuri1998}. Uma consulta mal formulada com subconsulta correlacionada, função sobre coluna indexada ou operação redundante pode ficar fora desse repertório e reescrevê-la de forma equivalente produz, então, ganhos que o otimizador sozinho, eventualmente, não alcança.
 
-Trabalhos recentes usam Modelos de Linguagem de Grande Escala (LLMs) para sugerir essas reescritas, seja escolhendo regras de um catálogo \cite{li2024llmr2,sun2025rbot}, seja gerando diretamente a consulta reescrita \cite{liu2025genrewrite,dharwada2026lithe}. A geração direta pode produzir consultas sintaticamente válidas e semanticamente incorretas \cite{huang2024hallucination}, e por isso cada reescrita precisa ser verificada antes de ser aceita. Os modelos principais desses trabalhos são pagos, abertos de grande porte ou ajustados para a tarefa (Seção~\ref{sec:relacionados}); falta medir quanto entrega um modelo pequeno, executado localmente e sem ajuste fino, que é a opção de quem não pode enviar consultas e esquema a um serviço externo.
+Trabalhos recentes usam modelos de linguagem de grande escala (LLMs) para sugerir essas reescritas, seja escolhendo regras de um catálogo \cite{li2024llmr2,sun2025rbot}, seja gerando diretamente a consulta reescrita \cite{liu2025genrewrite,dharwada2026lithe}. A geração direta pode produzir consultas sintaticamente válidas e semanticamente incorretas \cite{huang2024hallucination} e, por consequência, cada reescrita precisa ser verificada antes de ser aceita. Os trabalhos citados variam entre modelos pagos, abertos de grande porte ou ajustados para a tarefa (Seção~\ref{sec:relacionados}). Dessa forma, medir quanto entrega um modelo pequeno, executado localmente e sem ajuste fino ou treinamento específico, é uma opção a ser investigada visando usuários que não possam enviar consultas e esquema a um serviço externo ou não dispõem de poder computacional suficiente.
 
-Duas perguntas orientam o estudo. A primeira é em que medida as reescritas propostas por modelos de linguagem reduzem o custo das consultas e quantas alteram o resultado, quando o próprio banco de dados executa e compara cada reescrita. A segunda é se um modelo local, sem custo por chamada e sem envio de dados a terceiros, alcança o modelo pago ao receber progressivamente mais contexto sobre o banco. Alcançar, aqui, significa otimizar, em alguma fase, pelo menos tantas execuções quanto o modelo pago, sob a mesma validação.
+Duas perguntas orientam o estudo. A primeira é em que medida as reescritas propostas por modelos de linguagem reduzem o custo das consultas e quantas melhoram o resultado, quando o próprio banco de dados executa e compara cada reescrita. A segunda é se um modelo local, sem custo por chamada e sem envio de dados a terceiros, alcança o modelo pago ao receber progressivamente mais contexto sobre a base de dados investigada. Alcançar, aqui, significa otimizar, em alguma fase, pelo menos tantas execuções quanto o modelo pago, sob a mesma validação.
 
 O objetivo geral é comparar modelos locais e um modelo pago na reescrita de consultas SQL, sob uma metodologia em que o SGBD valida cada reescrita. Para isso, o trabalho reúne a metodologia de avaliação a partir das técnicas descritas na literatura, constrói um protótipo em que o modelo recebe apenas texto e nunca acessa o banco, classifica cada reescrita em cinco categorias e executa a comparação em dois cenários, um subconjunto do TPC-H e uma base controlada, em quatro fases de contexto e três repetições.
 
 \section{Referencial Teórico}
 
-\subsection{Evolução da Otimização de Consultas e Uso de Inteligência Artificial}
+\subsection{Otimização de consultas e uso de inteligência artificial (IA)}
 \label{sec:otimizacao}
 
-A otimização baseada em custo remonta ao System R, que estimava a seletividade dos predicados e escolhia, por programação dinâmica, a ordem de junção mais barata \cite{selinger1979}. \textcite{chaudhuri1998} descreve o otimizador em três blocos: transformações que preservam o resultado, um modelo que estima o custo de cada alternativa e um algoritmo de busca no espaço de planos. Neste trabalho, o LLM sugere as transformações, e o custo continua a ser estimado pelo SGBD.
+A otimização baseada em custo remonta ao System R, que estimava a seletividade dos predicados e escolhia, por programação dinâmica, a ordem de junção mais barata \cite{selinger1979}. \textcite{chaudhuri1998} descreve o otimizador em três blocos: transformações que preservam o resultado, um modelo que estima o custo de cada alternativa e um algoritmo de busca no espaço de planos. O ponto fraco desse arranjo é a estimação. Ao avaliar otimizadores sobre o \textit{Join Order Benchmark} (JOB), \textcite{leis2015job} mostraram que os erros de estimativa de cardinalidade degradam a qualidade dos planos mais do que o modelo de custo ou o algoritmo de enumeração. O paradigma de \textit{Learned Query Optimization} (LQO) leva o aprendizado de máquina para dentro do otimizador, com sistemas que aprendem a escolher planos, como o \textit{Neo} e o \textit{Bao} \cite{marcus2019neo,marcus2021bao}, ou estimadores de cardinalidade, como o \textit{NeuroCard} e o \textit{FLAT} \cite{yang2021neurocard,zhu2021flat}.
 
-O ponto fraco desse arranjo é a estimação. Ao avaliar otimizadores sobre o \textit{Join Order Benchmark} (JOB), \textcite{leis2015job} mostraram que os erros de estimativa de cardinalidade degradam a qualidade dos planos mais do que o modelo de custo ou o algoritmo de enumeração. O paradigma de \textit{Learned Query Optimization} (LQO) leva o aprendizado de máquina para dentro do otimizador, com sistemas que aprendem a escolher planos, como o \textit{Neo} e o \textit{Bao} \cite{marcus2019neo,marcus2021bao}, ou estimadores de cardinalidade, como o \textit{NeuroCard} e o \textit{FLAT} \cite{yang2021neurocard,zhu2021flat}. Essa linha corrige as estimativas, e não a consulta, e fica fora do foco deste trabalho.
+Reescrever uma consulta SQL significa transformá-la em outra que produza o mesmo resultado, porém de forma mais eficiente. A técnica antecede os modelos de linguagem: Starburst \cite{pirahesh1992starburst} aplicava regras de reescrita sobre a consulta antes do planejamento físico e o Apache Calcite \cite{begoli2018calcite} reúne uma biblioteca de regras de transformação testadas e reaproveitáveis. O limite dessas abordagens é estrutural, porque elas só aplicam transformações codificadas previamente.
 
-\subsection{Reescrita de Consultas SQL com Modelos de Linguagem}
-\label{sec:reescrita}
+Sistemas baseados em LLMs, apresentados na Seção~\ref{sec:relacionados}, seguem duas abordagens. Na primeira, o modelo escolhe e ordena regras de um catálogo existente, como em \textit{LLM-R2} e em \textit{R-Bot} \cite{li2024llmr2,sun2025rbot}. Na segunda, o modelo propõe a própria consulta reescrita, como em \textit{QUITE}, em \textit{LITHE} e \textit{GenRewrite}, que expressa em linguagem natural as transformações que aprende \cite{song2025quite,dharwada2026lithe,liu2025genrewrite}. Esses sistemas se apoiam no aprendizado em contexto, no qual o modelo resolve tarefas novas a partir do que recebe via \textit{prompt} \cite{brown2020fewshot} e em técnicas como o raciocínio passo a passo, a autoconsistência \cite{wei2022cot,wang2023selfconsistency} e a geração aumentada por recuperação (\textit{Retrieval-Augmented Generation} - RAG) \cite{lewis2020rag}.
 
-Reescrever uma consulta SQL significa transformá-la em outra que produza exatamente o mesmo resultado, porém de forma mais eficiente. A técnica antecede os modelos de linguagem: o Starburst aplicava regras de reescrita sobre a consulta antes do planejamento físico \cite{pirahesh1992starburst}, e o Apache Calcite reúne uma biblioteca de regras de transformação testadas e reaproveitáveis \cite{begoli2018calcite}. O limite dessas abordagens é estrutural, porque elas só aplicam transformações codificadas de antemão.
+A reescrita não se confunde com o \textit{Text-to-SQL}, que traduz uma pergunta em linguagem natural para uma consulta, mas essa tarefa vizinha mostra que a saída de um LLM não pode ser aceita sem verificação: em \textit{BIRD} \cite{li2023bird}, o melhor modelo avaliado, o ChatGPT, alcançou 40,08\% de acurácia de execução, contra 92,96\% das pessoas, e erros frequentes aparecem também em \textit{Spider} \cite{yu2018spider}. Em tarefas de banco de dados \cite{li2024llm4dm}, os LLMs estão sujeitos à alucinação de IA (\textit{AI hallucinations}), isto é, a produção de saídas plausíveis, porém incorretas \cite{huang2024hallucination}. Assim, cada reescrita precisa de uma instância externa que a valide.
 
-Os sistemas baseados em LLM, apresentados na Seção~\ref{sec:relacionados}, seguem duas linhas. Na primeira, o modelo escolhe e ordena regras de um catálogo existente, como no \textit{LLM-R2} e no \textit{R-Bot} \cite{li2024llmr2,sun2025rbot}. Na segunda, o modelo propõe a própria consulta reescrita, como no \textit{QUITE}, no \textit{LITHE} e no \textit{GenRewrite}, que expressa em linguagem natural as transformações que aprende \cite{song2025quite,dharwada2026lithe,liu2025genrewrite}. Esses sistemas se apoiam no aprendizado em contexto, em que o modelo resolve tarefas novas a partir do que recebe no \textit{prompt} \cite{brown2020fewshot}, e em técnicas como o raciocínio passo a passo, a autoconsistência \cite{wei2022cot,wang2023selfconsistency} e a geração aumentada por recuperação (RAG) \cite{lewis2020rag}. Este estudo usa só o aprendizado em contexto, numa chamada única, para isolar o efeito do contexto sobre o banco.
-
-A reescrita não se confunde com o \textit{Text-to-SQL}, que traduz uma pergunta em linguagem natural para uma consulta, mas essa tarefa vizinha mostra que a saída de um LLM não pode ser aceita sem verificação: no \textit{BIRD} \cite{li2023bird}, o melhor modelo avaliado, o ChatGPT, alcançou 40,08\% de acurácia de execução, contra 92,96\% das pessoas, e erros frequentes aparecem também no \textit{Spider} \cite{yu2018spider}. Em tarefas de banco de dados \cite{li2024llm4dm}, os LLMs estão sujeitos à alucinação, isto é, à produção de saídas plausíveis, porém incorretas \cite{huang2024hallucination}. Por isso, cada reescrita precisa de uma instância externa que a valide.
-
-\subsection{Síntese Crítica da Literatura}
+\subsection{Síntese crítica da literatura}
 \label{sec:sintese}
 
-A literatura segue, portanto, dois caminhos: levar o aprendizado de máquina para dentro do otimizador ou mantê-lo intacto e reescrever as consultas de fora, com o apoio de modelos de linguagem. Nenhum deles elimina um limite teórico que recai diretamente sobre a validação proposta neste trabalho: decidir se duas consultas são equivalentes é, no caso geral, um problema indecidível \cite{ahv1995}, e mesmo para consultas conjuntivas, sob semântica de conjuntos, decidir contenção e equivalência é NP-completo \cite{chandra1977}. Por isso, provadores automáticos como o \textit{Cosette}, o \textit{EQUITAS}, o \textit{SPES} e o \textit{VeriEQL} cobrem apenas fragmentos do SQL ou domínios finitos \cite{cosette2017,equitas2019,spes2022,verieql2024}.
+A literatura segue, portanto, dois caminhos: levar o aprendizado de máquina para dentro do otimizador ou mantê-lo intacto e reescrever as consultas externamente, com o apoio de modelos de linguagem. A consequência prática é que a validação deste trabalho recorre à comparação dos resultados produzidos sobre um conjunto concreto de dados, onde resultados diferentes refutam a equivalência, mas resultados iguais sobre uma instância não a comprovam. É essa a prática de parte dos trabalhos sobre sistemas de reescrita por LLM, como: ReSequel, SPA e a etapa por amostras do LITHE \cite{fathollahzadeh2026resequel,huang2026spa,dharwada2026lithe}.
 
-A consequência prática é que a validação deste trabalho recorre à comparação dos resultados produzidos sobre um conjunto concreto de dados. É uma aproximação pragmática, não uma garantia formal: resultados diferentes refutam a equivalência, mas resultados iguais sobre uma instância não a comprovam. É também a prática de parte dos sistemas de reescrita por LLM, como o ReSequel, o SPA e a etapa por amostras do LITHE \cite{fathollahzadeh2026resequel,huang2026spa,dharwada2026lithe}.
-
-\section{Trabalhos Relacionados}
+\section{Trabalhos relacionados}
 \label{sec:relacionados}
 
-Os estudos a seguir aplicam modelos de linguagem à reescrita de consultas SQL; cada item termina com o que este estudo aproveitou do trabalho ou em que difere dele.
+Os estudos a seguir aplicam modelos de linguagem à reescrita de consultas SQL. Cada item termina com o que este estudo aproveitou do trabalho ou em que difere dele.
 
 \begin{itemize}
-\item \textbf{IA na otimização de consultas} \cite{amaral2025}. Avalia o ChatGPT na reescrita de consultas em PostgreSQL, com scripts em Python que automatizam a execução e a coleta de métricas; em cenários com muitos \textit{joins}, a reescrita reduziu o tempo de execução em até 90\%. Como este estudo, avalia um modelo existente em vez de propor um sistema, mas com um único modelo pago; aqui, dois modelos locais entram na comparação.
+\item \textbf{IA na otimização de consultas} \cite{amaral2025}. Avalia o ChatGPT na reescrita de consultas em PostgreSQL, com \textit{scripts} em Python que automatizam a execução e a coleta de métricas; em cenários com muitos \textit{joins}, a reescrita reduziu o tempo de execução em até 90\%. Como este estudo, avalia um modelo existente em vez de propor um sistema, mas com um único modelo pago; aqui, dois modelos locais entram na comparação.
 
 \item \textbf{LLM-R2} \cite{li2024llmr2}. O modelo escolhe sequências de regras do Apache Calcite, com uma demonstração selecionada por um modelo contrastivo, e a reescrita é equivalente por construção. Este estudo usa a mesma verificação de que a reescrita executa no próprio banco (Seção~\ref{sec:analise}), mas aqui o modelo devolve o SQL reescrito, cuja equivalência precisa ser verificada por execução.
 
@@ -143,21 +139,23 @@ Os estudos a seguir aplicam modelos de linguagem à reescrita de consultas SQL; 
 
 \item \textbf{LITHE} \cite{dharwada2026lithe}. Reescreve no espaço da consulta (\textit{SQL-to-SQL}), combinando regras sensíveis ao banco com uma busca em árvore de Monte Carlo guiada pelas probabilidades de \textit{tokens} do modelo. Do LITHE vêm duas práticas adotadas aqui, o custo estimado como medida principal de ganho e o esquema com o tamanho das tabelas no \textit{prompt}, versão reduzida das estatísticas e seletividades usadas no LITHE (Seção~\ref{sec:metodo}); não há, porém, busca sobre alternativas: cada execução deste estudo é uma única chamada ao modelo.
 
-\item \textbf{QUITE} \cite{song2025quite}. Coordena agentes por uma máquina de estados finita, com retorno do banco por \texttt{EXPLAIN} e \textit{hints} que fixam o plano, o que lhe permite ir além das regras fixas. Aqui, o plano do \texttt{EXPLAIN} entra como contexto da fase C3 (Seção~\ref{sec:fases}), mas é entregue uma única vez, como texto, sem retorno sobre as reescritas propostas.
+\item \textbf{QUITE} \cite{song2025quite}. Coordena agentes por uma máquina de estados finita, com retorno do banco via comando \texttt{EXPLAIN} e \textit{hints} que fixam o plano, o que lhe permite ir além das regras fixas. Aqui, o plano do \texttt{EXPLAIN} entra como contexto da fase C3 (Seção~\ref{sec:fases}), mas é entregue uma única vez, como texto, sem retorno sobre as reescritas propostas.
 
-\item \textbf{ReSequel} \cite{fathollahzadeh2026resequel}. Agrupa a carga em templates, gera reescritas com LLMs, verifica-as por execução sobre amostras dos dados e as reaproveita por template. A classificação de consultas mal escritas proposta no trabalho serviu de base para as categorias da base controlada deste estudo.
+\item \textbf{ReSequel} \cite{fathollahzadeh2026resequel}. Agrupa a carga em \textit{templates}, gera reescritas com LLMs, verifica-as por execução sobre amostras dos dados e as reaproveita por \textit{template}. A classificação de consultas mal escritas proposta no trabalho serviu de base para as categorias da base controlada deste estudo.
 
 \item \textbf{SPA} \cite{huang2026spa}. Ajusta um modelo local por aprendizado por reforço, com o plano de execução e o tempo medido como recompensa. É o trabalho mais próximo do cenário de modelo local deste estudo, com a diferença de que aqui os modelos locais são avaliados sem ajuste fino.
 \end{itemize}
 
-A Tabela~\ref{tab:relacionados} compara os sete trabalhos que propõem um sistema de reescrita, incluindo o GenRewrite, apresentado na Seção~\ref{sec:reescrita}, e o presente estudo; o estudo de \textcite{amaral2025}, que não propõe um sistema, não entra na comparação.
+Este trabalho não propõe um sistema concorrente aos descritos. A metodologia (Seção~\ref{sec:metodo}) combina práticas desses trabalhos, com foco em comparar, sob a mesma sequência de testes e a mesma validação, dois modelos locais pequenos, sem ajuste fino e executados em CPU, usando como \textit{baseline} o GPT-4o, modelo principal do R-Bot e do LITHE. Na Tabela~\ref{tab:relacionados}, os modelos principais são pagos, abertos de grande porte ou, no SPA, ajustados para a tarefa.
 
+\begin{landscape}
 \begin{table}[!htb]
 \centering
-\caption{Comparação dos trabalhos relacionados quanto ao modelo usado nos experimentos principais, à forma de verificar a equivalência da reescrita, ao contexto do banco enviado ao modelo, à métrica de ganho e ao SGBD. ``Não declarado'' indica informação que o artigo não traz.}
+\caption{Comparação dos trabalhos relacionados quanto ao modelo usado nos experimentos principais}
 \label{tab:relacionados}
 \footnotesize\setlength{\tabcolsep}{2pt}
-\begin{tabular}{p{1.75cm}p{2.1cm}p{3.3cm}p{3.3cm}p{1.6cm}p{1.85cm}}
+% \begin{tabular}{p{1.75cm}p{2.1cm}p{3.3cm}p{3.3cm}p{1.6cm}p{1.85cm}}
+\begin{tabular}{p{1.75cm}p{2.8cm}p{4.2cm}p{4.5cm}p{2.8cm}p{2.6cm}}
 \hline
 \textbf{Trabalho} & \textbf{Modelo principal} & \textbf{Verificação de equivalência} & \textbf{Contexto do banco no \textit{prompt}} & \textbf{Métrica de ganho} & \textbf{SGBD} \\
 \hline
@@ -168,67 +166,79 @@ LITHE & GPT-4o & amostras do banco, prova formal (QED, SQLSolver) e banco inteir
 GenRewrite & o3-mini & prova formal (SQLSolver) e, quando ela não decide, teste por execução sobre entradas geradas; inspeção manual & regras em linguagem natural; plano com métricas de execução em chamada separada & tempo medido & PostgreSQL 14 \\
 ReSequel & Gemini-2.5-pro e OSS-120B & execução sobre amostras do banco e comparação de resultados & esquema, índices, restrições e estatísticas & tempo medido & PostgreSQL 17, MySQL 8 e DuckDB \\
 SPA & Qwen3-8B e Qwen3-32B com ajuste fino & execução e comparação de resultados & plano do \texttt{EXPLAIN} & tempo medido & PostgreSQL 16 \\
-Este trabalho & llama3.2 3B e llama3 8B locais, sem ajuste fino; GPT-4o & execução sobre a base inteira e comparação linha a linha & por fase: nada, esquema e número de linhas, catálogo de transformações, plano do \texttt{EXPLAIN} & custo estimado (principal) e tempo & PostgreSQL 14 \\
+\textbf{Presente trabalho} & Llama3.2 3B e llama3 8B locais, sem ajuste fino; GPT-4o & execução sobre a base inteira e comparação linha a linha & por fase: nada, esquema e número de linhas, catálogo de transformações, plano do \texttt{EXPLAIN} & custo estimado (principal) e tempo & PostgreSQL 14 \\
 \hline
 \end{tabular}
 \end{table}
-
-Este trabalho não propõe um sistema concorrente aos descritos. A metodologia (Seção~\ref{sec:metodo}) combina práticas desses trabalhos, e o foco é comparar, sob a mesma sequência de testes e a mesma validação, dois modelos locais pequenos, sem ajuste fino e executados em CPU, com o GPT-4o, modelo principal do R-Bot e do LITHE. Na Tabela~\ref{tab:relacionados}, os modelos principais são pagos, abertos de grande porte ou, no SPA, ajustados para a tarefa.
+\end{landscape}
 
 \section{Materiais e Métodos}
 \label{sec:metodo}
 
-Este trabalho é uma pesquisa aplicada, de abordagem quantitativa e natureza experimental. O desenho segue uma regra fixa: o modelo apenas propõe a reescrita e o banco de dados decide o que fazer com ela. O modelo recebe texto, composto pela consulta e pelo contexto extraído por script, e devolve texto; ele não possui credencial nem conexão com o SGBD. Só o validador descrito na Seção~\ref{sec:analise} executa SQL, original ou reescrito, em ambiente isolado. A reescrita classificada como otimizada é uma proposta ao desenvolvedor; a aplicação ao código permanece com ele.
+Este trabalho é uma pesquisa aplicada, de abordagem quantitativa e natureza experimental. O desenho segue uma regra fixa: o modelo apenas propõe a reescrita e o banco de dados decide o que fazer com ela. O modelo recebe texto, composto pela consulta e pelo contexto extraído via \textit{script}, e devolve texto; não há controle de acesso via credenciais nem conexão direta ao SGBD. Apenas o validador, descrito na Seção~\ref{sec:analise}, executa SQL, original ou reescrito, em ambiente isolado. A reescrita classificada como otimizada é uma proposta ao desenvolvedor e a decisão de aplicação permanece com ele.
 
 \subsection{Bases de Dados}
 \label{sec:bases}
 
-\textbf{Base controlada.} Um esquema próprio de loja, carregado com dados gerados por semente fixa: \texttt{cliente} (5.000 linhas), \texttt{produto} (500), \texttt{pedido} (50.000) e \texttt{item\_pedido} (150.000), com índices nas colunas de junção e de data e com a coluna \texttt{pedido.cupom\_id} admitindo nulos de propósito. Sobre esse esquema, o estudo reúne 18 consultas deliberadamente ineficientes, três por categoria de defeito, com categorias adaptadas da classificação de consultas mal escritas do ReSequel \cite{fathollahzadeh2026resequel} e com a categoria de correção redefinida para armadilhas de equivalência (Tabela~\ref{tab:consultas}); o SQL de cada consulta, com o defeito e a reescrita esperada em comentário, está no repositório do protótipo\footnote{Esquema, dados, consultas e código do protótipo:\newline\href{https://github.com/EduTremea/TCC/tree/main/Execu\%C3\%A7\%C3\%A3o/prototipo}{\texttt{https://github.com/EduTremea/TCC/tree/main/Execução/prototipo}}.}.
+%% REVISAR: colocar um parágrafo explicativo antes do item 'Base controlada.', falando que foram definidas 2 bases de dados e etc...
+\textbf{Base controlada.} Um esquema próprio de loja, carregado com dados gerados por semente (\textit{seed}) fixa para garantir reprodutibilidade: \texttt{cliente} (5.000 linhas), \texttt{produto} (500), \texttt{pedido} (50.000) e \texttt{item\_pedido} (150.000), com índices nas colunas de junção e data, além da admissão de nulos pela coluna \texttt{pedido.cupom\_id}. Sobre esse esquema, o estudo reúne 18 consultas deliberadamente ineficientes, três por categoria de defeito, com categorias adaptadas da classificação de consultas mal escritas do ReSequel \cite{fathollahzadeh2026resequel} e com a categoria de correção redefinida para evitar armadilhas de equivalência (\textit{equivalence pitfalls}) (ver Tabela~\ref{tab:consultas}). O código SQL de cada consulta, com o defeito e a reescrita esperada em comentário, está no repositório do protótipo\footnote{Esquema, dados, consultas e código do protótipo:\newline\href{https://github.com/EduTremea/TCC/tree/main/Execu\%C3\%A7\%C3\%A3o/prototipo}{\texttt{https://github.com/EduTremea/TCC/tree/main/Execução/prototipo}}.}.
 
 \begin{table}[!htb]
-\centering
-\caption{As 18 consultas da base controlada, por categoria.}
-\label{tab:consultas}
-\footnotesize
-\begin{tabular}{p{2.3cm}p{5.6cm}p{5.2cm}}
-\hline
-\textbf{Categoria} & \textbf{Defeito} & \textbf{Reescrita esperada} \\
-\hline
-sargabilidade & função ou aritmética sobre a coluna filtrada impede o uso do índice & predicado de faixa ou comparação direta \\
-subconsulta & subconsulta correlacionada executada por linha & junção com agrupamento ou semi-junção \\
-junção & junção implícita ou junção sem uso & junção explícita ou remoção da junção \\
-redundância & \texttt{DISTINCT} desnecessário, \texttt{UNION} de filtros exclusivos, \texttt{COUNT(DISTINCT)} sobre chave & projeção direta, \texttt{IN}, \texttt{COUNT(*)} \\
-agregação & agregação escalar correlacionada & agregação única com \texttt{GROUP BY} \\
-correção & consulta que parece ineficiente, mas cuja reescrita óbvia altera o resultado & nenhuma prevista; a reescrita óbvia deve ser rejeitada \\
-\hline
-\end{tabular}
+       \centering
+       \caption{As 18 consultas da base controlada, por categoria.}
+       \label{tab:consultas}       
+       \begin{talltblr}[  
+       label = none,
+       entry = none,
+       presep = 0pt,
+       postsep = 0pt,
+       note{1} = {Sargabilidade (\textit{sargability}) indica se uma consulta SQL foi escrita de forma a permitir que o otimizador do banco de dados use um índice disponível para acelerar a busca},
+       remark{Nota} = {A categoria \textbf{correção} serve como grupo de controle para avaliar se a ferramenta não introduz falsos positivos de otimização.},
+       % Se precisar de mais de uma nota, basta adicionar outra linha abaixo:
+       % remark{Obs.} = {Outro texto explicativo aqui se necessário.}
+       ]{
+       colspec = {Q[2.3cm, l] Q[5.6cm, l] Q[5.2cm, l]},
+       row{1} = {font=\bfseries},
+       hline{1,2,Z} = {solid}, % Adiciona as linhas no topo, abaixo do cabeçalho e no fundo
+       }
+       Categoria & Defeito & Reescrita esperada \\
+       sargabilidade\TblrNote{1} & função ou aritmética sobre a coluna filtrada impede o uso do índice & predicado de faixa ou comparação direta \\
+       subconsulta & subconsulta correlacionada executada por linha & junção com agrupamento ou semi-junção \\
+       junção & junção implícita ou junção sem uso & junção explícita ou remoção da junção \\
+       redundância & \texttt{DISTINCT} desnecessário, \texttt{UNION} de filtros exclusivos, \texttt{COUNT(DISTINCT)} sobre chave & projeção direta, \texttt{IN}, \texttt{COUNT(*)} \\
+       agregação & agregação escalar correlacionada & agregação única com \texttt{GROUP BY} \\
+       correção & consulta que parece ineficiente, mas cuja reescrita óbvia altera o resultado & nenhuma prevista; a reescrita óbvia deve ser rejeitada
+       \end{talltblr}
 \end{table}
 
-Quinze consultas foram construídas para ter ganho e são denominadas, neste trabalho, otimizáveis. As três de correção exercitam a verificação de resultado: \texttt{NOT IN} sobre coluna com nulos, \texttt{DISTINCT} necessário após junção e \texttt{COUNT(coluna)}, que ignora nulos; nelas não há ganho previsto, mas uma reescrita que preserve o resultado passa pelas mesmas regras das demais. A base própria também reduz o risco de reescritas memorizadas de bases públicas.
+Quinze consultas foram construídas para ter ganho e são denominadas, neste trabalho, como \enquote{otimizáveis}. As três consultas de correção exercitam a verificação de resultado: \texttt{NOT IN} sobre coluna com nulos, \texttt{DISTINCT} necessário após junção e \texttt{COUNT(coluna)}, que ignora nulos; nelas não há ganho previsto, mas uma reescrita que preserve o resultado passa pelas mesmas regras das demais. A base própria também reduz o risco de reescritas memorizadas de bases públicas.
 
 \textbf{TPC-H.} A base de referência da literatura \cite{tpch}, em fator de escala 1, carregada em banco separado no mesmo contêiner, com chaves, índices e estatísticas atualizadas. O TPC-H entra para situar o estudo em relação à literatura, que avalia reescrita sobre bases de referência públicas, e para contrastar consultas já bem escritas com as da base controlada. O subconjunto tem quatro consultas oficiais, escolhidas por exercitarem as mesmas construções das categorias da base controlada: a Q03 junta três tabelas por junção implícita, com agregação e ordenação; a Q04 testa a existência de itens com uma subconsulta correlacionada em \texttt{EXISTS}; a Q06 filtra uma única tabela por faixas de data, desconto e quantidade; e a Q18 combina uma subconsulta em \texttt{IN} com \texttt{GROUP BY} e \texttt{HAVING} e uma junção implícita de três tabelas. Por ser cenário de contraste, o TPC-H ficou restrito a essas quatro consultas, que somam 144 execuções com cerca de um minuto de inferência por reescrita no llama3 (8B) (Seção~\ref{sec:tpch}), e as comparações estatísticas usam apenas a base controlada.
 
 \subsection{Ambiente Experimental}
 \label{sec:ambiente}
 
-Os experimentos rodaram em uma máquina com 16 GB de memória e processador Intel Core i7-1355U, de 10 núcleos e 12 \textit{threads}, sem GPU dedicada. O SGBD é o PostgreSQL 14.24 em Docker, versão dos trabalhos de referência \cite{sun2025rbot,song2025quite}, com \texttt{shared\_buffers} de 512 MB, \texttt{work\_mem} de 64 MB e \texttt{effective\_cache\_size} de 2 GB; o protótipo usa Python 3.12. Os modelos locais rodam pelo Ollama, em CPU e sem rede. O protótipo não fixa o parâmetro \texttt{num\_ctx} e usa a janela de contexto padrão do servidor, que variou entre versões do Ollama, de 2.048 \textit{tokens} nas mais antigas a 4.096 ou mais nas recentes; o maior \textit{prompt} do estudo, de 1.439 \textit{tokens}, cabe em qualquer uma delas. Os pesos do llama3.2 (3B) e do llama3 (8B) têm resumo SHA-256 iniciado por \texttt{dde5aa3fc5ff} e \texttt{6a0746a1ec1a}; a versão do Ollama usada de 5 a 12 de outubro de 2026 não foi registrada, e a instalada em 27 de outubro é a 0.40.11. O modelo pago é acessado pela API do fornecedor, sem ferramentas e sem busca na web.
+Os experimentos rodaram em uma máquina com 16 GB de memória RAM e processador Intel Core i7-1355U, de 10 núcleos e 12 \textit{threads}, sem GPU dedicada. O SGBD foi PostgreSQL 14.24 em container Docker, mantendo a versão e parâmetros presentes nos trabalhos de referência \cite{sun2025rbot,song2025quite}, sendo estes: \texttt{shared\_buffers} de 512 MB, \texttt{work\_mem} de 64 MB e \texttt{effective\_cache\_size} de 2 GB. O protótipo fez uso da linguagem Python 3.12, sendo que os modelos de LLMs locais rodaram pelo Ollama, em CPU e sem rede. O protótipo não fixa o parâmetro \texttt{num\_ctx} e usa a janela de contexto padrão do servidor, que variou entre versões do Ollama, de 2.048 \textit{tokens} nas mais antigas a 4.096 ou mais nas recentes; o maior \textit{prompt} do estudo, de 1.439 \textit{tokens}, coube em qualquer uma delas. Os pesos do llama3.2 (3B) e do llama3 (8B) têm resumo SHA-256 iniciado por \texttt{dde5aa3fc5ff} e \texttt{6a0746a1ec1a}; a versão do Ollama usada de 5 a 12 de outubro de 2026 não foi registrada, e a instalada em 27 de outubro é a 0.40.11. O modelo pago é acessado pela API do fornecedor, sem ferramentas e sem busca na web.
 
-\subsection{Modelos de Linguagem Comparados}
+\subsection{Modelos de linguagem comparados}
 \label{sec:modelos}
 
-O \texttt{llama3.2}, com 3 bilhões de parâmetros, e o \texttt{llama3}, com 8 bilhões, são modelos abertos da família Llama, executados pelo Ollama em versões quantizadas de 4 bits (Q4\_K\_M e Q4\_0, respectivamente); cabem na memória de uma máquina sem GPU e não têm custo por chamada, o cenário de quem não pode enviar dados a um serviço externo. O modelo pago é o \texttt{gpt-4o}, identificador exato enviado à API, escolhido por ser o modelo principal do LITHE \cite{dharwada2026lithe} e do R-Bot \cite{sun2025rbot} e pelo custo, de cerca de US\$ 3,50 em todo o estudo. As chamadas ao GPT-4o que compõem os resultados foram feitas entre 7 e 12 de outubro de 2026. Todos os modelos rodaram com temperatura zero. No restante do texto, cada modelo é designado por llama3.2 (3B), llama3 (8B) ou GPT-4o na primeira menção de cada seção e, nas demais, por 3B, 8B ou GPT-4o.
+O \texttt{llama3.2}, com 3 bilhões de parâmetros, e o \texttt{llama3}, com 8 bilhões, são modelos abertos da família Llama, executados pelo Ollama em versões quantizadas de 4 bits (Q4\_K\_M e Q4\_0, respectivamente); cabem na memória de uma máquina sem GPU e não têm custo por chamada, o cenário de quem não pode enviar dados a um serviço externo ou treinar localmente um modelo em GPU. O modelo pago é o \texttt{gpt-4o} (GPT-4o), identificador exato enviado à API, escolhido por ser o modelo principal do LITHE \cite{dharwada2026lithe} e do R-Bot \cite{sun2025rbot} e pelo custo, de cerca de US\$ 3,50 em todo o estudo. As chamadas ao GPT-4o que compõem os resultados foram feitas entre 7 e 12 de outubro de 2026. Todos os modelos rodaram com o parâmetro de temperatura (\textit{AI temperature}) zero, visando respostas mais focadas e determinísticas. No restante do texto, cada modelo é designado por llama3.2 (3B), llama3 (8B) ou GPT-4o na primeira menção de cada seção e, nas demais, por 3B, 8B ou GPT-4o.
 
-\subsection{Cenários e Fases}
+\subsection{Cenários e fases}
 \label{sec:fases}
 
-Os dois cenários, o TPC-H e a base controlada, passam pela mesma sequência de quatro fases, que diferem apenas pelo que o modelo recebe junto com a consulta: na C0, de partida fria, só a instrução de reescrita, no que a literatura chama de \textit{zero-shot} \cite{brown2020fewshot}; na C1, também o esquema das tabelas, com colunas e tipos, e o número aproximado de linhas; na C2, além disso, um catálogo de oito transformações clássicas, em linguagem genérica (Apêndice~\ref{ap:prompts}); e na C3, ainda o plano estimado da consulta original, obtido com \texttt{EXPLAIN}, como no QUITE, no GenRewrite e no SPA \cite{song2025quite,liu2025genrewrite,huang2026spa}.
+Os dois cenários propostos, usando a base de dados TPC-H e a base controlada, passam pela mesma sequência de quatro fases, que diferem apenas pelo que o modelo recebe com a consulta: na C0, há apenas uma instrução de reescrita, sendo o que a literatura chama de \textit{zero-shot} \cite{brown2020fewshot}; na C1, é adicionado o esquema das tabelas, com colunas e tipos, e o número aproximado de linhas; na C2, além disso, um catálogo de oito transformações clássicas, em linguagem genérica (Apêndice~\ref{ap:prompts}); e na C3, ainda o plano estimado da consulta original, obtido com \texttt{EXPLAIN}, como nas abordagens presentes em QUITE, no GenRewrite e no SPA \cite{song2025quite,liu2025genrewrite,huang2026spa}.
 
-Todo o contexto é extraído do catálogo do PostgreSQL e entregue como texto, sem nenhuma linha de dado, e um teste automatizado garante que nenhum \textit{prompt} cita os sistemas de referência, de modo que o modelo recebe apenas o contexto do banco. Como variante de controle, a fase C1 foi executada também com esquema completo, com colunas \texttt{NOT NULL}, chaves e índices, uma vez por modelo.
+Todo o contexto é extraído do catálogo do PostgreSQL e entregue como texto, sem nenhuma linha de dado, e um teste automatizado garante que nenhum \textit{prompt} cita os sistemas de referência, de modo que o modelo recebe apenas o contexto do banco de dados. Como variante de controle, a fase C1 foi executada também com esquema completo, com colunas \texttt{NOT NULL}, chaves e índices, uma vez por modelo.
 
-\subsection{Protocolo de Execução}
+\subsection{Protocolo de execução}
 \label{sec:protocolo}
 
-Uma execução corresponde a uma consulta, uma fase e um modelo e é uma chamada independente, sem histórico de conversa; o protótipo registra o \textit{prompt} completo, a reescrita e o resultado de cada verificação. Cada combinação foi executada três vezes, porque o GPT-4o, acessado por API, não é determinístico mesmo com temperatura zero e porque a repetição mede a repetibilidade dos modelos locais: são $4 \times 4 \times 3 \times 3 = 144$ execuções no TPC-H e $18 \times 4 \times 3 \times 3 = 648$ na base controlada. As reescritas foram gravadas primeiro e medidas depois, sem nenhum modelo em execução.
+Uma execução corresponde a uma consulta, uma fase e um modelo e é uma chamada independente, sem histórico de conversa. O protótipo registra o \textit{prompt} completo, a reescrita e o resultado de cada verificação. Cada combinação foi executada três vezes, porque o GPT-4o, acessado por API, não é determinístico mesmo com temperatura zero (há um ajuste utilizando \textit{log probability}\footnote{
+	\href{https://developers.openai.com/api/reference/resources/audio/subresources/translations/methods/create\#(resource)\%20audio.translations\%20\%3E\%20(method)\%20create\%20\%3E\%20(params)\%200\%20\%3E\%20(param)\%20temperature\%20\%3E\%20(schema)}
+	{\texttt{https://developers.openai.com}}
+}) e porque a repetição mede a repetibilidade dos modelos locais: são $4 \times 4 \times 3 \times 3 = 144$ execuções no TPC-H e $18 \times 4 \times 3 \times 3 = 648$ na base controlada. As reescritas foram gravadas primeiro e medidas depois, sem nenhum modelo em execução.
 
 \subsection{Análise dos Resultados}
 \label{sec:analise}
@@ -243,20 +253,21 @@ Uma execução corresponde a uma consulta, uma fase e um modelo e é uma chamada
 \item \textbf{otimizada}: mesmo resultado e custo estimado menor.
 \end{enumerate}
 
-\textbf{Custo estimado como critério.} A medida de ganho é o custo total do plano estimado pelo planejador do PostgreSQL, obtido com \texttt{EXPLAIN} a partir das estatísticas das tabelas e de constantes de custo por página e por linha \cite{postgresql14explain,postgresql14cost}. É a medida usada no LITHE \cite{dharwada2026lithe} e no sistema de reescrita aprendida de \textcite{zhou2021learnedrewrite}: independe do hardware, expressa a decisão do otimizador e, por ser determinística, não tem ruído de medição, de modo que não se aplica limiar ao custo, ao contrário do tempo. Em compensação, herda os erros de estimativa discutidos na Seção~\ref{sec:otimizacao}, e por isso o tempo é medido ao lado. O ganho de custo é a razão entre o custo da original e o da reescrita; o efeito de exigir um ganho mínimo é relatado na Seção~\ref{sec:controlada}.
+\textbf{Custo estimado como critério.} A medida de ganho é o custo total do plano estimado pelo planejador do PostgreSQL, obtido com \texttt{EXPLAIN} a partir das estatísticas das tabelas e de constantes de custo por página e por linha \cite{postgresql14explain,postgresql14cost}. É a medida usada no LITHE \cite{dharwada2026lithe} e no sistema de reescrita aprendida de \textcite{zhou2021learnedrewrite}, trazendo os seguintes benefícios: independe do hardware, expressa a decisão do otimizador e, por ser determinística, não tem ruído de medição, de modo que não se aplica limiar ao custo, ao contrário do tempo. Em compensação, herda os erros de estimativa discutidos na Seção~\ref{sec:otimizacao}, e por isso o tempo é medido ao lado. O ganho de custo é a razão entre o custo da original e o da reescrita; o efeito de exigir um ganho mínimo é relatado na Seção~\ref{sec:controlada}.
 
+%% REVISAR: Qual foi o 'aquecimento'? Por que utilizou a mediana? (citar algum estudo ou justificativa)
 \textbf{Tempo como complemento.} Toda execução válida tem também a razão entre o tempo da original e o da reescrita, medida sem nenhum modelo de linguagem carregado, com um aquecimento e cinco pares intercalados em ordem alternada; a razão reportada é a mediana. O limiar para considerar a reescrita mais rápida é 1,15, acima da razão máxima de 1,148 observada ao submeter cada uma das 18 consultas da base controlada como se fosse a sua própria reescrita, em três rodadas, num total de 54 medições; o mesmo limiar foi aplicado ao TPC-H.
 
-\textbf{Comparação entre modelos.} Um teste de sinais pareado por consulta compara, em cada uma das 18 consultas, o número de execuções otimizadas de dois modelos, exclui os empates e calcula o p-valor binomial bicaudal. As três comparações no total das fases são as planejadas e recebem a correção de Holm; as comparações por fase são exploratórias. Nas tabelas, os números por fase são médias das três repetições, e os de síntese, somas das quatro fases e das três repetições.
+\textbf{Comparação entre modelos.} Um teste de sinais pareado por consulta compara, em cada uma das 18 consultas, o número de execuções otimizadas de dois modelos, exclui os empates e calcula o $p$-valor binomial bicaudal. As três comparações no total das fases são as planejadas e recebem a correção de Holm; as comparações por fase são exploratórias. Nas tabelas, os números por fase são médias das três repetições, e os de síntese, somas das quatro fases e das três repetições.
 
 \subsection{Ameaças à Validade}
 \label{sec:ameacas}
 
-\textbf{Validade interna.} A verificação de resultado por execução não constitui prova de equivalência. O custo estimado é uma previsão do planejador e não captura diferenças dentro de um mesmo plano, e o tempo, medido em máquina local com cache quente, é só indicação. O GPT-4o não é determinístico mesmo com temperatura zero (Seção~\ref{sec:reprodutibilidade}). O protótipo registrou o identificador enviado à API, \texttt{gpt-4o}, e não a versão devolvida na resposta; como esse identificador é um apelido para uma versão datada, e só as versões datadas fixam o modelo \cite{openai2026gpt4o}, os resultados valem para a versão servida entre 7 e 12 de outubro de 2026. As versões datadas do GPT-4o têm remoção da API prevista para 14 de janeiro de 2027 \cite{openai2026deprecations}, e depois dessa data essa parte do experimento não poderá ser repetida. Como as fases são cumulativas, o efeito de cada bloco de contexto não se separa do aumento do \textit{prompt}. Os modelos locais rodaram quantizados em 4 bits.
+\textbf{Validade interna.} A verificação de resultado por execução não constitui prova de equivalência. O custo estimado é uma previsão do planejador e não captura diferenças em um mesmo plano, e o tempo, medido em máquina local com cache quente (\textit{hot cache}), é só indicação. O GPT-4o não é determinístico mesmo com temperatura zero (mais detalhes na Seção~\ref{sec:reprodutibilidade}). O protótipo registrou o identificador enviado à API, \texttt{gpt-4o}, e não a versão devolvida na resposta; como esse identificador é um apelido para uma versão datada, e só as versões datadas fixam o modelo \cite{openai2026gpt4o}, os resultados valem para a versão servida entre 7 e 12 de outubro de 2026. As versões datadas do GPT-4o têm remoção da API prevista para 14 de janeiro de 2027 \cite{openai2026deprecations}, e depois dessa data essa parte do experimento não poderá ser repetida. Como as fases são cumulativas, o efeito de cada bloco de contexto não se separa do aumento do \textit{prompt}. Os modelos locais rodaram quantizados em 4 bits.
 
 \textbf{Validade externa.} São 18 consultas sintéticas e quatro do TPC-H, o que limita a generalização e o poder do teste; o TPC-H provavelmente está no material de treinamento dos modelos, risco que a base própria reduz. O formato de instrução foi um só, a variante de esquema completo tem uma repetição e os modelos avaliados não são os mais recentes.
 
-\textbf{Validade de construto.} O mesmo autor escreveu as consultas, a reescrita esperada e o catálogo da fase C2, o que pode alinhá-los; a reescrita esperada não foi fornecida aos modelos nem usada na classificação.
+\textbf{Validade de construto.} O próprio autor escreveu as consultas, a reescrita esperada e o catálogo da fase C2, o que pode alinhá-los; a reescrita esperada não foi fornecida aos modelos nem usada na classificação.
 
 \subsection{Uso de Ferramentas de IA}
 
@@ -269,12 +280,13 @@ Os dois cenários são apresentados na seguinte ordem: primeiro a base de refer�
 \subsection{Cenário 1: TPC-H}
 \label{sec:tpch}
 
-As 144 execuções do TPC-H estão classificadas por fase na Figura~\ref{fig:tpch}. Nenhum modelo otimizou nenhuma consulta em nenhuma fase: toda reescrita válida teve o mesmo custo estimado e o mesmo plano de execução da original. Das 144 execuções, 91 foram válidas sem ganho, 26 invalidaram o resultado e 27 não executaram. A única execução com razão de tempo igual ou superior a 1,15 foi uma repetição de Q06 pelo llama3 (8B) na fase C0, com custo idêntico ao da original. Todas as reescritas do GPT-4o executaram, em todas as fases; no 8B, nove das doze execuções da fase C3 não executaram: nas três repetições da Q03, da Q04 e da Q18, a reescrita reestruturou a consulta e referenciou coluna inexistente ou ambígua ou deixou coluna fora do \texttt{GROUP BY}.
+As 144 execuções do TPC-H estão classificadas por fase na Figura~\ref{fig:tpch}. Nenhum modelo otimizou nenhuma consulta em nenhuma fase: toda reescrita válida teve o mesmo custo estimado e o mesmo plano de execução da original. Das 144 execuções, 91 foram válidas sem ganho, 26 invalidaram o resultado e 27 não executaram. A única execução com razão de tempo igual ou superior a 1,15 foi uma repetição de Q06 pelo llama3 (8B) na fase C0, com custo idêntico ao da original. Todas as reescritas do GPT-4o executaram, em todas as fases; no 8B, nove das doze execuções da fase C3 não executaram: nas três repetições da Q03, da Q04 e da Q18, a reescrita reestruturou a consulta e referenciou coluna inexistente, ou ambígua, ou deixou coluna fora do \texttt{GROUP BY}.
 
+%% REVISAR: a legenda do eixo vertical ficou estranha: "consultas, de 4 (média de ..."
 \begin{figure}[!htb]
 \centering
 \includegraphics[width=\textwidth]{figuras/fig_tpch.png}
-\caption{Classificação das execuções no TPC-H por fase e modelo, em barras empilhadas; a altura total de cada barra é 4.}
+\caption{Classificação das execuções no TPC-H por fase e modelo. Valor máximo no eixo Y é 4.}
 \label{fig:tpch}
 \end{figure}
 
@@ -283,10 +295,11 @@ As 144 execuções do TPC-H estão classificadas por fase na Figura~\ref{fig:tpc
 
 As 18 consultas passaram pela mesma sequência, totalizando 648 execuções (Figura~\ref{fig:controlada}). Na fase C0, o llama3.2 (3B) devolveu a própria consulta original em seis das 18 consultas; o esquema da fase C1 elevou as otimizadas do 8B e do GPT-4o, e as fases C2 e C3 aumentaram as inválidas por resultado dos dois modelos locais. Em nenhuma fase o GPT-4o teve reescrita que não executasse ou que devolvesse a consulta original sem mudança. O Apêndice~\ref{ap:exemplo} mostra uma execução completa, da consulta original à classificação.
 
+%% REVISAR: a legenda do eixo vertical ficou estranha: "consultas, de 18 (média de ..."
 \begin{figure}[!htb]
 \centering
 \includegraphics[width=\textwidth]{figuras/fig_controlada.png}
-\caption{Classificação das execuções na base controlada por fase e modelo, em barras empilhadas; a altura total de cada barra é 18.}
+\caption{Classificação das execuções na base controlada por fase e modelo. Valor máximo no eixo Y é 18.}
 \label{fig:controlada}
 \end{figure}
 
@@ -294,53 +307,68 @@ As 18 consultas passaram pela mesma sequência, totalizando 648 execuções (Fig
 
 \begin{table}[!htb]
 \centering
-\caption{Execuções inválidas por resultado na base controlada, por tipo de diferença em relação à consulta original. Cada número é uma soma das quatro fases e das três repetições.}
+\caption{Execuções inválidas por resultado na base controlada, por tipo de diferença em relação à consulta original.}
 \label{tab:invalidas}
-\footnotesize\setlength{\tabcolsep}{5pt}
-\begin{tabular}{lrrrr}
-\hline
-\textbf{Tipo de diferença} & \textbf{llama3.2 (3B)} & \textbf{llama3 (8B)} & \textbf{GPT-4o} & \textbf{Total} \\
-\hline
+\footnotesize
+\begin{talltblr}[
+    label = none,
+    entry = none,
+    presep = 0pt,
+    postsep = 0pt,
+    remark{Nota} = {Cada número é uma soma das quatro fases e das três repetições.},
+]{
+    colspec = {l rrrr},
+    colsep = 5pt,
+    row{1,Z} = {font=\bfseries},
+    hline{1,2,5,Z} = {solid},
+}
+Tipo de diferença & llama3.2 (3B) & llama3 (8B) & GPT-4o & Total \\
 mais linhas que a original & 18 & 24 & 16 & 58 \\
 menos linhas que a original & 6 & 9 & 12 & 27 \\
 mesmo número de linhas, valores diferentes & 15 & 9 & 4 & 28 \\
-\hline
-\textbf{Total} & \textbf{39} & \textbf{42} & \textbf{32} & \textbf{113} \\
-\hline
-\end{tabular}
+Total & 39 & 42 & 32 & 113 \\
+\end{talltblr}
 \end{table}
 
 \textbf{Otimizadas e cobertura.} Sob o critério de custo (Tabela~\ref{tab:otimizadas}), o GPT-4o otimizou 58\% das execuções, o 8B, 38\%, e o 3B, 33\%, e exigir também a razão de tempo de 1,15 reduz todas as contagens sem mudar a ordem. O GPT-4o otimizou dez das 15 consultas otimizáveis e cada modelo local, oito, todas entre as dez do GPT-4o; só ele otimizou uma junção, a \texttt{juncao\_02}, e, na fase C1, as três consultas de sargabilidade nas três repetições. Nas consultas otimizáveis que cobre, excluída a \texttt{correcao\_03}, que não é otimizável, o GPT-4o otimizou 116 de 120 execuções; o 8B, 78 de 96; o 3B, 72 de 96. Somadas as execuções otimizadas da \texttt{correcao\_03}, 9 no GPT-4o e 3 no 8B, chega-se aos totais de 125, 81 e 72 da Tabela~\ref{tab:sintese}. Cinco consultas não foram otimizadas por nenhum modelo: \texttt{agregacao\_01}, \texttt{juncao\_01}, \texttt{juncao\_03}, \texttt{redundancia\_03} e \texttt{subconsulta\_03}.
 
 \begin{table}[!htb]
 \centering
-\caption{Consultas otimizadas por modelo e fase, sob o critério de custo e sob o critério de custo combinado com tempo. Cada número é quantas das 18 consultas foram otimizadas naquela fase, na média das três repetições; o total soma as quatro fases, de 72, e a taxa é o total dividido por 72.}
+\caption{Consultas otimizadas por modelo e fase, sob os critérios de custo e custo combinado com tempo.}
 \label{tab:otimizadas}
 \footnotesize
-\begin{tabular}{llrrrrrr}
-\hline
-\textbf{Modelo} & \textbf{Critério} & \textbf{C0} & \textbf{C1} & \textbf{C2} & \textbf{C3} & \textbf{Total (72)} & \textbf{Taxa} \\
-\hline
+\begin{talltblr}[
+    label = none,
+    entry = none,
+    presep = 0pt,
+    postsep = 0pt,
+    remark{Nota} = {Cada número é quantas das 18 consultas foram otimizadas naquela fase, na média das três repetições. O total soma as quatro fases (72 consultas), e a taxa é o total dividido por 72.},
+]{
+    colspec = {ll rrrr rr},
+    row{1} = {font=\bfseries},
+    hline{1,2,Z} = {solid},
+    hline{5} = {solid},
+}
+Modelo & Critério & C0 & C1 & C2 & C3 & Total (72) & Taxa \\
 llama3.2 (3B) & otimizada (custo) & 7,0 & 7,0 & 5,0 & 5,0 & 24,0 & 33\% \\
 llama3 (8B) & otimizada (custo) & 7,0 & 8,0 & 7,0 & 5,0 & 27,0 & 38\% \\
 GPT-4o & otimizada (custo) & 9,0 & 11,0 & 11,0 & 10,7 & 41,7 & 58\% \\
 llama3.2 (3B) & otimizada e tempo $\geq$ 1,15 & 5,0 & 4,3 & 3,0 & 4,0 & 16,3 & 23\% \\
 llama3 (8B) & otimizada e tempo $\geq$ 1,15 & 5,0 & 5,7 & 6,0 & 4,0 & 20,7 & 29\% \\
 GPT-4o & otimizada e tempo $\geq$ 1,15 & 6,0 & 7,7 & 7,7 & 7,7 & 29,1 & 40\% \\
-\hline
-\end{tabular}
+\end{talltblr}
 \end{table}
 
-\textbf{Comparação entre modelos.} No total das quatro fases (Tabela~\ref{tab:sinais}), o GPT-4o superou cada modelo local em todas as consultas em que houve diferença; com a correção de Holm nas três comparações planejadas, os p-valores ajustados são 0,023 contra o 3B, 0,031 contra o 8B e 0,45 entre os locais. Em nenhuma fase e em nenhuma consulta um modelo local superou o GPT-4o, mas, com 12 a 16 empates em 18 consultas, os testes por fase têm pouco poder; na fase C1, nenhum é significativo. A significância depende de não haver ganho mínimo: exigindo razão de custo de pelo menos 1,05, a vantagem sobre o 8B deixa de ser significativa após a correção (p ajustado 0,062, contra 0,047 para o 3B), e com 1,10 nenhuma comparação se mantém, embora a ordem entre os modelos não mude.
+\textbf{Comparação entre modelos.} Para cada uma das 18 consultas, compara-se o número de execuções otimizadas de cada modelo (soma das quatro fases e das três repetições); ``A $>$ B'' conta em quantas consultas o primeiro modelo superou o segundo, os empates são excluídos e o $p$-valor é binomial bicaudal. No total das quatro fases (Tabela~\ref{tab:sinais}), o GPT-4o superou cada modelo local em todas as consultas em que houve diferença; com a correção de Holm nas três comparações planejadas, os $p$-valores ajustados são 0,023 contra o 3B, 0,031 contra o 8B e 0,45 entre os locais. Em nenhuma fase e em nenhuma consulta um modelo local superou o GPT-4o, mas, com 12 a 16 empates em 18 consultas, os testes por fase têm pouco poder; na fase C1, nenhum é significativo. A significância depende de não haver ganho mínimo: exigindo razão de custo de pelo menos 1,05, a vantagem sobre o 8B deixa de ser significativa após a correção ($p$ ajustado 0,062, contra 0,047 para o 3B), e com 1,10 nenhuma comparação se mantém, embora a ordem entre os modelos não mude.
 
 \begin{table}[!htb]
 \centering
-\caption{Teste de sinais pareado por consulta, critério de custo. Para cada uma das 18 consultas, a estatística é o número de execuções otimizadas de cada modelo; ``A $>$ B'' conta em quantas consultas o primeiro modelo superou o segundo, os empates são excluídos e o p-valor é binomial bicaudal.}
+\caption{Teste de sinais pareado por consulta, sob o critério de custo.}
 \label{tab:sinais}
 \footnotesize
 \begin{tabular}{llrrrr}
 \hline
-\textbf{Escopo} & \textbf{Comparação} & \textbf{A $>$ B} & \textbf{A $<$ B} & \textbf{Empates} & \textbf{p-valor} \\
+\textbf{Escopo} & \textbf{Comparação} & \textbf{A $>$ B} & \textbf{A $<$ B} & \textbf{Empates} & \textbf{$p$-valor} \\
 \hline
 C1 & GPT-4o x llama3 (8B) & 3 & 0 & 15 & 0,25 \\
 C1 & GPT-4o x llama3.2 (3B) & 4 & 0 & 14 & 0,13 \\
@@ -352,17 +380,25 @@ Total & llama3 (8B) x llama3.2 (3B) & 5 & 2 & 11 & 0,45 \\
 \end{tabular}
 \end{table}
 
-\textbf{Ganho de custo.} A Tabela~\ref{tab:ganhoconsulta} lista as onze consultas com pelo menos uma execução otimizada. Das dez otimizadas por mais de um modelo, oito têm razão entre o maior e o menor ganho de no máximo 1,06; as exceções são a \texttt{redundancia\_01} no 3B e a \texttt{subconsulta\_01} no 8B. Quatro consultas têm ganho de 88,9 a 934, salvo o 3B na \texttt{redundancia\_01}, e as demais, de 1,02 a 17,6. A \texttt{correcao\_03} aparece porque o GPT-4o e o 8B preservaram o resultado acrescentando o filtro \texttt{cupom\_id IS NOT NULL}; a reescrita óbvia, \texttt{count(*)} sem o filtro, foi invalidada. A mediana do ganho sobre todas as execuções otimizadas de cada modelo foi de 14,8 no 3B, 88,9 no 8B e 2,6 no GPT-4o.
+\textbf{Ganho de custo.} A Tabela~\ref{tab:ganhoconsulta} lista as onze consultas com pelo menos uma execução otimizada. Dez delas foram otimizadas por mais de um modelo e, em oito, a razão entre o maior e o menor ganho é de no máximo 1,06. As exceções são a \texttt{redundancia\_01}, em que o 3B ficou muito abaixo dos demais (9,2 contra 784 e 934), e a \texttt{subconsulta\_01}, em que o 8B ficou abaixo dos outros dois (2,57 contra 16,7 e 17,6). Quatro consultas concentram os maiores ganhos, de 88,9 a 934 (exceto o 3B na \texttt{redundancia\_01}); nas demais, o ganho vai de 1,02 a 17,6. A \texttt{correcao\_03}, que é da categoria de controle, aparece porque o GPT-4o e o 8B preservaram o resultado ao acrescentar o filtro \texttt{cupom\_id IS NOT NULL}, enquanto a reescrita óbvia, \texttt{COUNT(*)} sem o filtro, foi invalidada. A mediana do ganho, calculada sobre todas as execuções otimizadas de cada modelo, foi de 14,8 no 3B, 88,9 no 8B e 2,6 no GPT-4o.
 
 \begin{table}[!htb]
 \centering
-\caption{Ganho de custo por consulta e modelo: mediana da razão entre o custo da original e o da reescrita nas execuções otimizadas daquela consulta, em todas as fases e repetições; ``--'' indica que o modelo não otimizou a consulta; a última coluna é a razão entre o maior e o menor ganho entre os modelos que a otimizaram.}
+\caption{Ganho de custo por consulta e modelo: mediana da razão entre o custo da original e o da reescrita.}
 \label{tab:ganhoconsulta}
 \footnotesize
-\begin{tabular}{lrrrr}
-\hline
-\textbf{Consulta} & \textbf{llama3.2 (3B)} & \textbf{llama3 (8B)} & \textbf{GPT-4o} & \textbf{Maior / menor} \\
-\hline
+\begin{talltblr}[
+    label = none,
+    entry = none,
+    presep = 0pt,
+    postsep = 0pt,
+    remark{Nota} = {A mediana considera as execuções otimizadas daquela consulta, em todas as fases e repetições. ``--'' indica que o modelo não otimizou a consulta. A última coluna é a razão entre o maior e o menor ganho entre os modelos que a otimizaram.},
+]{
+    colspec = {l rrrr},
+    row{1} = {font=\bfseries},
+    hline{1,2,Z} = {solid},
+}
+Consulta & llama3.2 (3B) & llama3 (8B) & GPT-4o & Maior / menor \\
 agregacao\_02 & 88,9 & 88,9 & 94,3 & 1,06 \\
 agregacao\_03 & 1,12 & -- & 1,12 & 1,00 \\
 correcao\_03 & -- & 1,02 & 1,02 & 1,00 \\
@@ -374,28 +410,35 @@ sargabilidade\_02 & 1,05 & 1,05 & 1,05 & 1,00 \\
 sargabilidade\_03 & 265 & 265 & 265 & 1,00 \\
 subconsulta\_01 & 17,6 & 2,57 & 16,7 & 6,84 \\
 subconsulta\_02 & 160 & 158 & 159 & 1,01 \\
-\hline
-\end{tabular}
+\end{talltblr}
 \end{table}
 
 \textbf{Custo e tempo.}\label{sec:custotempo} Sob o critério só de tempo, a ordem entre os modelos no total é a mesma do custo; nas fases C0 e C3, em que os locais empatam sob custo, o 8B fica à frente sob tempo. Algumas reescritas válidas sem ganho de custo passaram de 1,15 no tempo. O caso recorrente é a \texttt{redundancia\_03}: a troca de \texttt{COUNT(DISTINCT id)} por \texttt{COUNT(*)} mantém o plano e o custo estimado, 958, e executa entre 30\% e 50\% mais rápido nas três repetições, no 8B e no GPT-4o.
 
-\textbf{Síntese do cenário.} Em 648 execuções (Tabela~\ref{tab:sintese}), 113 reescritas invalidaram o resultado e 54 devolveram a própria consulta original. A coluna ``sem efeito'' soma 39 execuções sem mudança e 39 válidas sem ganho no 3B, 15 e 60 no 8B e 0 e 59 no GPT-4o. Das 27 execuções do 3B na categoria não executa, 6 são reescritas com produto cartesiano que ultrapassaram o limite de cinco minutos. O tempo de inferência, do envio do \textit{prompt} ao recebimento da reescrita, teve mediana de 7,1~s no 3B, 16,6~s no 8B e 0,8~s no GPT-4o na base controlada e de 24,7~s, 57,3~s e 1,5~s no TPC-H; nos modelos locais ele cresce com o tamanho do \textit{prompt}, e no GPT-4o inclui a ida e volta pela rede.
+\textbf{Síntese do cenário.} Em 648 execuções (Tabela~\ref{tab:sintese}), 113 reescritas invalidaram o resultado e 54 devolveram a própria consulta original. A coluna ``sem efeito'' reúne duas categorias, sem mudança e válida sem ganho, que somam, respectivamente, 39 e 39 execuções no 3B, 15 e 60 no 8B e 0 e 59 no GPT-4o. Das 27 execuções do 3B na categoria ``não executa'', 6 foram reescritas com produto cartesiano que ultrapassaram o limite de cinco minutos. O tempo de inferência, do envio do \textit{prompt} ao recebimento da reescrita, teve mediana de 7,1~s no 3B, 16,6~s no 8B e 0,8~s no GPT-4o na base controlada, e de 24,7~s, 57,3~s e 1,5~s no TPC-H. Nos modelos locais, esse tempo cresce com o tamanho do \textit{prompt}; no GPT-4o, inclui a ida e volta pela rede.
 
 \begin{table}[!htb]
 \centering
-\caption{Síntese por modelo na base controlada. Cada número é a soma das quatro fases e das três repetições, de 216 execuções por modelo; ``sem efeito'' soma as categorias sem mudança e válida sem ganho.}
+\caption{Síntese por modelo na base controlada, com 216 execuções por modelo.}
 \label{tab:sintese}
-\footnotesize\setlength{\tabcolsep}{4pt}
-\begin{tabular}{l>{\raggedleft\arraybackslash}p{2.4cm}>{\raggedleft\arraybackslash}p{3.4cm}>{\raggedleft\arraybackslash}p{2.6cm}>{\raggedleft\arraybackslash}p{2cm}}
-\hline
-\textbf{Modelo} & \textbf{Melhorou (otimizada)} & \textbf{Sem efeito} & \textbf{Invalidou o resultado} & \textbf{Não executa} \\
-\hline
+\footnotesize
+\begin{talltblr}[
+    label = none,
+    entry = none,
+    presep = 0pt,
+    postsep = 0pt,
+    remark{Nota} = {Cada número é a soma das quatro fases e das três repetições. ``Sem efeito'' soma as categorias sem mudança e válida sem ganho.},
+]{
+    colspec = {l Q[r,wd=2.4cm] Q[r,wd=3.4cm] Q[r,wd=2.6cm] Q[r,wd=2cm]},
+    colsep = 4pt,
+    row{1} = {font=\bfseries},
+    hline{1,2,Z} = {solid},
+}
+Modelo & Melhorou (otimizada) & Sem efeito & Invalidou o resultado & Não executa \\
 llama3.2 (3B) & 72 (33\%) & 78 (36\%) & 39 (18\%) & 27 (12\%) \\
 llama3 (8B) & 81 (38\%) & 75 (35\%) & 42 (19\%) & 18 (8\%) \\
 GPT-4o & 125 (58\%) & 59 (27\%) & 32 (15\%) & 0 \\
-\hline
-\end{tabular}
+\end{talltblr}
 \end{table}
 
 \subsection{Repetibilidade}
@@ -405,16 +448,11 @@ Com temperatura zero, o llama3 (8B) devolveu o mesmo SQL nas três repetições 
 
 \section{Discussão}
 
-\subsection{O que a Validação Revelou}
-
 O achado mais estável do estudo é a proporção de reescritas que alteram o resultado: de 15\% a 19\% das execuções de cada modelo na base controlada, inclusive no GPT-4o, cujas reescritas sempre executaram. Uma verificação que só testasse se a reescrita executa aceitaria todas elas. Nas três consultas de correção, construídas para que a reescrita óbvia alterasse o resultado, essa reescrita apareceu e foi sempre barrada, e as aceitas mantiveram o que a armadilha exige: o \texttt{NOT IN} na \texttt{correcao\_01}, a eliminação de duplicatas, por \texttt{DISTINCT}, \texttt{GROUP BY} ou \texttt{EXISTS}, na \texttt{correcao\_02}, e o filtro de nulos na \texttt{correcao\_03}, a única que trouxe ganho de custo.
 
 Entre o ganho e o erro, a leitura em cinco categorias mostra ainda uma parcela de reescritas sem efeito, de 27\% das execuções no GPT-4o a 36\% no llama3.2 (3B), segura em uso prático porque a consulta original é mantida.
 
 O validador, porém, só assegura o mesmo resultado na instância avaliada. Resultados iguais sobre uma base não provam equivalência (Seção~\ref{sec:sintese}), e a \texttt{agregacao\_02} mostra o efeito: a original soma os itens de cada produto numa subconsulta escalar, que devolve nulo para produto sem itens, e as 36 execuções foram aceitas como otimizadas, mas 32 trocam esse nulo por zero, com \texttt{COALESCE}, ou descartam o produto, com junção interna. Elas só passaram porque, nesta base, todo produto tem itens; apenas quatro, com junção externa e sem \texttt{COALESCE}, são equivalentes em geral. Na \texttt{agregacao\_01}, em que há pedidos pagos sem itens, a mesma junção interna foi barrada (Seção~\ref{sec:pagolocal}). As demais reescritas aceitas não passaram por prova formal nem por inspeção manual sistemática, e o risco é maior em bases pequenas e sintéticas como a deste estudo. Quanto às inválidas, quase metade vem das consultas de correção e o restante, sobretudo, de agregação e subconsulta, em que a troca de uma subconsulta correlacionada por junção pode multiplicar ou perder linhas; em 28 casos o número de linhas é igual ao da original (Tabela~\ref{tab:invalidas}), o que uma verificação baseada só na contagem não detectaria.
-
-\subsection{Modelo Pago e Modelos Locais}
-\label{sec:pagolocal}
 
 Sob o critério de custo, o llama3 (8B) obteve cerca de dois terços das otimizações do GPT-4o, 81 contra 125 execuções, e o llama3.2 (3B), 72. A vantagem do GPT-4o sobre cada local é significativa no total das fases, após a correção de Holm e sem ganho mínimo de custo, e os dois locais não diferem entre si (Tabela~\ref{tab:sinais}).
 
@@ -428,8 +466,6 @@ Os perfis de erro também diferem: todas as reescritas do GPT-4o executaram e ne
 
 A segunda pergunta do estudo era se um modelo local, recebendo mais contexto, alcança o modelo pago. Isso não ocorreu em nenhuma fase: em todas, os locais otimizaram menos execuções que o GPT-4o, e em nenhuma consulta um local o superou. O esquema e os tamanhos elevaram as otimizadas do GPT-4o de 9,0 para 11,0 e as do 8B de 7,0 para 8,0, variações de uma ou duas consultas que o teste de sinais não distingue do acaso; o 3B ficou em 7,0. O catálogo e o plano de execução não acrescentaram otimizadas e aumentaram as inválidas por resultado dos locais, e o esquema completo, em uma única repetição na fase C1, reduziu as otimizadas dos locais, de 7,0 para 5,0 no 3B e de 8,0 para 7,0 no 8B, e manteve as 11,0 do GPT-4o. Uma hipótese compatível com esses dados é que, nos modelos pequenos, as transformações sugeridas passam a ser aplicadas mesmo quando a condição de equivalência não vale. Na \texttt{correcao\_02}, por exemplo, o 8B manteve o \texttt{DISTINCT} nas fases C0 e C1 e o removeu na fase C2, como o catálogo sugere para colunas projetadas já únicas, embora \texttt{c.uf} não seja única; o resultado passou de 5 para 29.949 linhas nas três repetições. Como as fases são cumulativas e o formato de instrução foi um só, o estudo não separa o efeito de cada bloco do aumento do \textit{prompt}.
 
-\subsection{Os Dois Cenários e os Trabalhos Relacionados}
-
 No TPC-H, em consultas já bem escritas, não restou transformação a aplicar; o ganho apareceu na base de consultas com defeitos conhecidos, o cenário em que um desenvolvedor submete uma consulta lenta para revisão. O método é, portanto, uma ferramenta de revisão de consultas, não um substituto do otimizador.
 
 O que este estudo acrescenta é a comparação, sob a mesma validação, de modelos locais pequenos, sem ajuste fino e executados em CPU, com o GPT-4o, modelo principal do R-Bot e do LITHE. A resposta, cerca de dois terços das otimizações do GPT-4o, vale para os modelos e o formato de instrução avaliados. O resultado nulo no TPC-H também delimita a comparação: os trabalhos relacionados avaliam conjuntos maiores de consultas, vários deles com busca sobre alternativas ou com várias chamadas ao modelo, enquanto aqui são quatro consultas em fator de escala 1 e cada reescrita vem de uma única chamada.
@@ -438,17 +474,18 @@ O que este estudo acrescenta é a comparação, sob a mesma validação, de mode
 
 Este trabalho avaliou a reescrita de consultas SQL por modelos de linguagem sob uma metodologia em que o modelo apenas sugere a nova consulta e o próprio SGBD a classifica em cinco categorias, comparando dois modelos locais e um modelo pago.
 
-Quanto à primeira pergunta, as reescritas foram classificadas como otimizadas em 33\% a 58\% das execuções da base controlada, conforme o modelo, e em nenhuma do TPC-H; de 15\% a 19\% das execuções de cada modelo alteraram o resultado e foram barradas pelo validador. A comparação de resultados assegura o mesmo resultado na instância avaliada, e não a equivalência em geral, como mostra a \texttt{agregacao\_02}. Quanto à segunda, nenhum modelo local alcançou o modelo pago em nenhuma fase, mas o llama3 (8B) entregou cerca de dois terços das otimizações do GPT-4o, 38\% contra 58\% das execuções, sem custo por chamada e sem enviar dado ou esquema a serviço externo. A diferença é significativa no total das fases após a correção de Holm, desde que não se exija ganho mínimo de custo, e entre os dois modelos locais não há diferença significativa.
+s reescritas foram classificadas como otimizadas em 33\% a 58\% das execuções da base controlada, conforme o modelo, e em nenhuma do TPC-H; de 15\% a 19\% das execuções de cada modelo alteraram o resultado e foram barradas pelo validador. A comparação de resultados assegura o mesmo resultado na instância avaliada, e não a equivalência em geral, como mostra a \texttt{agregacao\_02}. Nenhum modelo local alcançou o modelo pago em nenhuma fase, mas o llama3 (8B) entregou cerca de dois terços das otimizações do GPT-4o, 38\% contra 58\% das execuções, sem custo por chamada e sem enviar dado ou esquema a serviço externo. A diferença é significativa no total das fases após a correção de Holm, desde que não se exija ganho mínimo de custo, e entre os dois modelos locais não há diferença significativa.
 
-O contexto fornecido não compensou a diferença entre os modelos: o esquema e os tamanhos elevaram pouco as otimizadas do GPT-4o e do 8B, e o catálogo e o plano de execução aumentaram as reescritas inválidas dos locais. O ganho varia mais entre consultas do que entre modelos e se concentra em consultas mal escritas, o que situa o método como ferramenta de revisão de consultas lentas, não como substituto do otimizador. O procedimento mostrou-se repetível: sob o critério de custo, a classificação só mudou entre repetições em duas células do GPT-4o, cuja API não é determinística.
+O contexto fornecido não compensou a diferença entre os modelos: o esquema e os tamanhos elevaram pouco as otimizadas do GPT-4o e do 8B, e o catálogo e o plano de execução aumentaram as reescritas inválidas dos locais. O ganho variou mais entre consultas do que entre modelos e se concentra em consultas mal escritas, o que situa o método como ferramenta de revisão de consultas lentas, não como substituto do otimizador. Com relação ao procedimento, mostrou-se repetível: sob o critério de custo, a classificação só mudou entre repetições em duas células do GPT-4o, cuja API não é determinística.
 
-As limitações estão na Seção~\ref{sec:ameacas}, às quais se soma o tempo de inferência dos modelos locais em CPU. Como trabalhos futuros, indicam-se ampliar o TPC-H, incluir o TPC-DS \cite{nambiar2006tpcds} e consultas reais de produção, complementar a comparação de resultados com casos de borda ou prova formal, avaliar modelos locais mais recentes e outros formatos de instrução e integrar o protótipo a um fluxo de desenvolvimento em que a reescrita otimizada chegue ao desenvolvedor como proposta.
+As limitações estão na Seção~\ref{sec:ameacas}, às quais se soma o tempo de inferência dos modelos locais em CPU. Como trabalhos futuros, indica-se o uso de GPU (com capacidade compatível para treinamento de LLMs),  ampliar o TPC-H, incluir o TPC-DS \cite{nambiar2006tpcds} e consultas reais de produção, complementar a comparação de resultados com casos de borda ou prova formal, avaliar modelos locais mais recentes e outros formatos de instrução e integrar o protótipo a um fluxo de desenvolvimento em que a reescrita otimizada chegue ao desenvolvedor como proposta.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Seção de Referências (gerada automaticamente)
 \printbibliography  % Não remover esta linha
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\newpage
 \appendix
 \titlelabel{APÊNDICE \thetitle~--~}
 \section{Prompts usados nas fases de contexto}
@@ -475,6 +512,7 @@ Nas fases seguintes, o \textit{prompt} acrescenta blocos entre a instrução e a
 - Ao converter NOT IN em anti-juncao, atente para valores NULL, que alteram o resultado.
 \end{lstlisting}
 
+\newpage
 \section{Exemplo completo de uma execução}
 \label{ap:exemplo}
 
