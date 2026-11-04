@@ -75,7 +75,7 @@
 % 2025-06-05: (fahadkalil) Adição de novos exemplos de referências bibliográficas, figuras e tabelas / Correção para que campos desnecessários no arquivo .bib sejam ignorados na renderização / Correção de espaçamento no comando \begin{itemize} usando opções adicionais na seção Trabalhos Relacionados / Correção de recuos quando utilizado o comando \begin{description} / Correção na fonte e espaçamentos do comando 'lstlisting'
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CABEÇALHO
-\title{Reescrita de consultas SQL baseada em LLMs} % titulo
+\title{Reescrita de consultas SQL com LLMs: \\uma abordagem local usando CPU} % titulo
 
 \author{Luiz Eduardo Treméa\inst{1}, Fahad Kalil\inst{1}} % autor principal, orientador
 
@@ -175,13 +175,14 @@ SPA & Qwen3-8B e Qwen3-32B com ajuste fino & execução e comparação de result
 \section{Materiais e Métodos}
 \label{sec:metodo}
 
+%% REVISAR: " modelo apenas propõe a reescrita e o banco de dados decide o que fazer com ela".. explique melhor, como o banco de dados decide ?
 Este trabalho é uma pesquisa aplicada, de abordagem quantitativa e natureza experimental. O desenho segue uma regra fixa: o modelo apenas propõe a reescrita e o banco de dados decide o que fazer com ela. O modelo recebe texto, composto pela consulta e pelo contexto extraído via \textit{script}, e devolve texto; não há controle de acesso via credenciais nem conexão direta ao SGBD. Apenas o validador, descrito na Seção~\ref{sec:analise}, executa SQL, original ou reescrito, em ambiente isolado. A reescrita classificada como otimizada é uma proposta ao desenvolvedor e a decisão de aplicação permanece com ele.
 
 \subsection{Bases de Dados}
 \label{sec:bases}
 
 %% REVISAR: colocar um parágrafo explicativo antes do item 'Base controlada.', falando que foram definidas 2 bases de dados e etc...
-\textbf{Base controlada.} Um esquema próprio de loja, carregado com dados gerados por semente (\textit{seed}) fixa para garantir reprodutibilidade: \texttt{cliente} (5.000 linhas), \texttt{produto} (500), \texttt{pedido} (50.000) e \texttt{item\_pedido} (150.000), com índices nas colunas de junção e data, além da admissão de nulos pela coluna \texttt{pedido.cupom\_id}. Sobre esse esquema, o estudo reúne 18 consultas deliberadamente ineficientes, três por categoria de defeito, com categorias adaptadas da classificação de consultas mal escritas do ReSequel \cite{fathollahzadeh2026resequel} e com a categoria de correção redefinida para evitar armadilhas de equivalência (\textit{equivalence pitfalls}) (ver Tabela~\ref{tab:consultas}). O código SQL de cada consulta, com o defeito e a reescrita esperada em comentário, está no repositório do protótipo\footnote{Esquema, dados, consultas e código do protótipo:\newline\href{https://github.com/EduTremea/TCC/tree/main/Execu\%C3\%A7\%C3\%A3o/prototipo}{\texttt{https://github.com/EduTremea/TCC/tree/main/Execução/prototipo}}.}.
+\textbf{Base controlada.} Um esquema próprio de loja, carregado com dados gerados por semente (\textit{seed}) fixa para garantir reprodutibilidade: \texttt{cliente} (5.000 linhas), \texttt{produto} (500), \texttt{pedido} (50.000) e \texttt{item\_pedido} (150.000), com índices nas colunas de junção e data, além da admissão de nulos pela coluna \texttt{pedido.cupom\_id}. Sobre esse esquema, o estudo reúne 18 consultas deliberadamente ineficientes, três por categoria de defeito, com categorias adaptadas da classificação de consultas mal escritas do ReSequel \cite{fathollahzadeh2026resequel} e com a categoria de correção redefinida para evitar armadilhas de equivalência (\textit{equivalence pitfalls}) (ver Tabela~\ref{tab:consultas}). O código SQL de cada consulta, com o defeito e a reescrita esperada em comentário, está no repositório do protótipo\footnote{Esquema, dados, consultas e código do protótipo:\newline\href{https://github.com/EduTremea/TCC/tree/main/Execu\%C3\%A7\%C3\%A3o/prototipo}{\texttt{https://github.com/EduTremea/TCC/tree/main/Execução/prototipo}}}.
 
 \begin{table}[!htb]
        \centering
@@ -228,6 +229,7 @@ O \texttt{llama3.2}, com 3 bilhões de parâmetros, e o \texttt{llama3}, com 8 b
 \subsection{Cenários e fases}
 \label{sec:fases}
 
+%% REVISAR: Você fala em C0, C1 ... mas nunca explicou o que são essas siglas.. são consultas ou etapas?
 Os dois cenários propostos, usando a base de dados TPC-H e a base controlada, passam pela mesma sequência de quatro fases, que diferem apenas pelo que o modelo recebe com a consulta: na C0, há apenas uma instrução de reescrita, sendo o que a literatura chama de \textit{zero-shot} \cite{brown2020fewshot}; na C1, é adicionado o esquema das tabelas, com colunas e tipos, e o número aproximado de linhas; na C2, além disso, um catálogo de oito transformações clássicas, em linguagem genérica (Apêndice~\ref{ap:prompts}); e na C3, ainda o plano estimado da consulta original, obtido com \texttt{EXPLAIN}, como nas abordagens presentes em QUITE, no GenRewrite e no SPA \cite{song2025quite,liu2025genrewrite,huang2026spa}.
 
 Todo o contexto é extraído do catálogo do PostgreSQL e entregue como texto, sem nenhuma linha de dado, e um teste automatizado garante que nenhum \textit{prompt} cita os sistemas de referência, de modo que o modelo recebe apenas o contexto do banco de dados. Como variante de controle, a fase C1 foi executada também com esquema completo, com colunas \texttt{NOT NULL}, chaves e índices, uma vez por modelo.
