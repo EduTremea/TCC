@@ -274,7 +274,7 @@ def figura(media, caminho, de):
         eixo.set_title(f"Fase {cfg}", fontsize=10)
         eixo.set_ylim(0, de)
         eixo.spines[["top", "right"]].set_visible(False)
-    eixos[0].set_ylabel(f"consultas, de {de}\n(média de 3 repetições)", fontsize=9)
+    eixos[0].set_ylabel("consultas (média de 3 repetições)", fontsize=9)
     alcas, nomes = eixos[0].get_legend_handles_labels()
     fig.legend(alcas, nomes, loc="lower center", ncol=3, fontsize=9, frameon=False, bbox_to_anchor=(0.5, -0.02))
     fig.tight_layout(rect=(0, 0.13, 1, 1))
