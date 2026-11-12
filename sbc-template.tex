@@ -150,7 +150,7 @@ Este trabalho não propõe um sistema concorrente aos descritos. A metodologia (
 \begin{landscape}
 \begin{table}[!htb]
 \centering
-\caption{Comparação dos trabalhos relacionados quanto ao modelo usado nos experimentos principais}
+\caption{Comparativo entre os trabalhos relacionados}
 \label{tab:relacionados}
 \footnotesize\setlength{\tabcolsep}{2pt}
 % \begin{tabular}{p{1.75cm}p{2.1cm}p{3.3cm}p{3.3cm}p{1.6cm}p{1.85cm}}
@@ -179,13 +179,13 @@ Este trabalho é uma pesquisa aplicada, de abordagem quantitativa e natureza exp
 \subsection{Bases de dados}
 \label{sec:bases}
 
-O estudo usa duas bases com papéis distintos. O TPC-H é a referência da literatura e tem consultas já bem escritas. A base controlada foi construída para este estudo, com defeitos conhecidos.
+O estudo usa duas bases com papéis distintos, sendo a denominada \textbf{base controlada} construída pelo autor com defeitos técnicos já conhecidos e a base \textbf{TPC-H}, que é referência da literatura (\textit{baseline}) e possui consultas bem escritas/formuladas.
 
-\textbf{Base controlada.} Um esquema próprio de loja, carregado com dados gerados por semente (\textit{seed}) fixa para garantir reprodutibilidade: \texttt{cliente} (5.000 linhas), \texttt{produto} (500), \texttt{pedido} (50.000) e \texttt{item\_pedido} (150.000), com índices nas colunas de junção e data, além da admissão de nulos pela coluna \texttt{pedido.cupom\_id}. Sobre esse esquema, o estudo reúne 18 consultas deliberadamente ineficientes, três por categoria de defeito, com categorias adaptadas da classificação de consultas mal escritas do ReSequel \cite{fathollahzadeh2026resequel} e com a categoria de correção redefinida para armadilhas de equivalência (\textit{equivalence pitfalls}) (ver Tabela~\ref{tab:consultas}). O código SQL de cada consulta, com o defeito e a reescrita esperada em comentário, está no repositório do protótipo\footnote{Esquema, dados, consultas e código do protótipo:\newline\href{https://github.com/EduTremea/TCC/tree/main/Execu\%C3\%A7\%C3\%A3o/prototipo}{\texttt{https://github.com/EduTremea/TCC/tree/main/Execução/prototipo}}}.
+\textbf{Base controlada.} Um esquema próprio de loja, carregado com dados gerados por semente (\textit{seed}) fixa para garantir reprodutibilidade: \texttt{cliente} (5.000 linhas), \texttt{produto} (500), \texttt{pedido} (50.000) e \texttt{item\_pedido} (150.000), com índices nas colunas de junção e data, além da admissão de nulos pela coluna \texttt{pedido.cupom\_id}. Sobre esse esquema, o estudo reúne 18 consultas deliberadamente ineficientes, sendo três por categoria de defeito, com categorias adaptadas da classificação de consultas mal escritas do ReSequel \cite{fathollahzadeh2026resequel} e com a categoria de correção redefinida para armadilhas de equivalência (\textit{equivalence pitfalls}) (ver Tabela~\ref{tab:consultas}). O código SQL de cada consulta, com o defeito e a reescrita esperada em comentário, está no repositório do protótipo\footnote{Esquema, dados, consultas e código do protótipo:\newline\href{https://github.com/EduTremea/TCC/tree/main/Execu\%C3\%A7\%C3\%A3o/prototipo}{\texttt{https://github.com/EduTremea/TCC/tree/main/Execução/prototipo}}}.
 
 \begin{table}[!htb]
        \centering
-       \caption{As 18 consultas da base controlada, por categoria.}
+       \caption{Categorias de consultas na base controlada.}
        \label{tab:consultas}       
        \begin{talltblr}[  
        label = none,
@@ -254,7 +254,7 @@ Uma execução corresponde a uma consulta, uma fase e um modelo e é uma chamada
 
 \textbf{Tempo como complemento.} Toda execução válida tem também a razão entre o tempo da original e o da reescrita, medida sem nenhum modelo de linguagem carregado. O aquecimento é uma execução de cada consulta, descartada, para reduzir o efeito da partida a frio, como no QUITE e no SPA \cite{song2025quite,huang2026spa}. Seguem-se cinco pares intercalados em ordem alternada, e a razão reportada é a mediana das cinco razões, decisão deste estudo para reduzir o peso de valores extremos, a mesma preocupação do R-Bot, que descarta o maior e o menor de cinco tempos \cite{sun2025rbot}. O limiar para considerar a reescrita mais rápida é 1,15, acima da razão máxima de 1,148 observada ao submeter cada uma das 18 consultas da base controlada como se fosse a sua própria reescrita, em três rodadas, num total de 54 medições; o mesmo limiar foi aplicado ao TPC-H.
 
-\textbf{Comparação entre modelos.} Um teste de sinais pareado por consulta compara, em cada uma das 18 consultas, o número de execuções otimizadas de dois modelos, exclui os empates e calcula o $p$-valor binomial bicaudal. As três comparações no total das fases são as planejadas e recebem a correção de Holm; as comparações por fase são exploratórias. Nas tabelas, os números por fase são médias das três repetições, e os de síntese, somas das quatro fases e das três repetições.
+\textbf{Comparação entre modelos.} Um teste de sinais pareado por consulta compara, em cada uma das 18 consultas, o número de execuções otimizadas de dois modelos, exclui os empates e calcula o $p$-valor binomial bicaudal. As três comparações no total das fases são as planejadas e recebem a correção de Holm (para controlar falsos positivos); as comparações por fase são exploratórias. Nas tabelas, os números por fase são médias das três repetições, e os de síntese, somas das quatro fases e das três repetições.
 
 \subsection{Ameaças à validade}
 \label{sec:ameacas}
@@ -462,7 +462,7 @@ Os perfis de erro também diferem: todas as reescritas do GPT-4o executaram e ne
 
 O que este estudo acrescenta é a comparação, sob a mesma validação, de modelos locais pequenos, sem ajuste fino e executados em CPU, com o GPT-4o, modelo principal do R-Bot e do LITHE. A resposta, cerca de dois terços das otimizações do GPT-4o, vale para os modelos e o formato de instrução avaliados. O resultado nulo no TPC-H também delimita a comparação: os trabalhos relacionados avaliam conjuntos maiores de consultas, vários deles com busca sobre alternativas ou com várias chamadas ao modelo, enquanto aqui são quatro consultas em fator de escala 1 e cada reescrita vem de uma única chamada.
 
-\section{Conclusão}
+\section{Considerações Finais}
 
 Este trabalho avaliou a reescrita de consultas SQL por modelos de linguagem sob uma metodologia em que o modelo apenas sugere a nova consulta e um validador a classifica em cinco categorias, a partir das respostas do próprio SGBD, comparando dois modelos locais e um modelo pago.
 
